@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<sdf version="1.4">
+    <model name="camera_stand">
+        <static>true</static>
+        <link name="link">
+        <pose>0 0 0.48 0 0 0</pose>
+        <collision name="pole">
+            <geometry>
+                <box>
+                    <size>0.04 0.04 0.88</size>
+                </box>
+            </geometry>
+        </collision>
+        <visual name="visual">
+            <geometry>
+                <box>
+                    <size>0.04 0.04 0.84</size>
+                </box>
+            </geometry>
+        </visual>
+
+        <collision name="slab">
+            <pose>0 0 0.02 0 0 0</pose>
+            <geometry>
+                <box>
+                    <size>0.1 0.1 0.04</size>
+                </box>
+            </geometry>
+            </collision>
+            <visual name="visual">
+                <geometry>
+                    <box>
+                        <size>0.1 0.1 0.04</size>
+                    </box>
+                </geometry>
+            </visual>
+
+        </link>
+    </model>
+</sdf>
