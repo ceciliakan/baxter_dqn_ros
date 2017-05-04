@@ -42,7 +42,7 @@ class BaxterManipulator(object):
 		self._obj_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
 		
 		self.dep_image_pub = rospy.Publisher("DepthMap", Image, queue_size=4)
-		self.cloudpoint_pub = rospy.Publisher("Cloudy", String, queue_size=10)
+		self.cloudpoint_pub = rospy.Publisher("Cloudy", Image, queue_size=40)
 		
 		# Link with baxter interface
 		self._left_arm  = baxter_interface.limb.Limb("left")
@@ -192,8 +192,7 @@ class BaxterManipulator(object):
 		rospy.Subscriber("/gazebo/model_states", ModelStates, self.object_pose_callback)
 		rospy.Subscriber("/cameras/right_hand_camera/image", Image,self.img_callback)
 		
-		rospy.Subscriber("/depth/points", PointCloud2, self.cloud_callback)
-		rospy.Subscriber("/depth/image_raw", Image, self.dep_callback)
+		rospy.Subscriber("/DepCamera/depth/image_raw", Image, self.dep_callback)
 		
 		rospy.spin()	
 
@@ -204,17 +203,15 @@ class BaxterManipulator(object):
 		#if I_min != I_max:
 		#	data.data = 255*(self.depth_msg - I_min) / (I_max - I_min)
 		#	data.encoding = "8UC1"
+		self.cloudpoint_pub.publish(data)
 		cv_depth_img = self.bridge.imgmsg_to_cv2(data, "passthrough")
-		cv_depth_img = cv2.resize(cv_depth_image, (60, 60))
+		cv_depth_img = cv2.resize(cv_depth_img, (60, 60))
 		cv_depth_img = numpy.array(cv_depth_img, dtype = numpy.float32)
 		cv2.normalize(cv_depth_img, cv_depth_img, 0, 1, cv2.NORM_MINMAX)
 		cv_depth_img = cv_depth_img *255
-		
+		cv_depth_img.astype(numpy.uint8)
 		self.depth_msg = self.bridge.cv2_to_imgmsg(cv_depth_img, "mono8")
 		self.dep_image_pub.publish(self.depth_msg)
-
-	def cloud_callback(self,data):
-		self.cloudpoint_pub.publish("cloudy")
 	
 	def move_vertical( self, direction ):
 

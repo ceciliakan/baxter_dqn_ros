@@ -24,9 +24,9 @@
 					<width>320</width>
 					<height>240</height>
 				</image>
-				<depth_camera>
+				<!--<depth_camera>
 					<output>depths</output>
-				</depth_camera>
+				</depth_camera>-->
 				<clip>
 					<near>0.1</near>
 					<far>5</far>
@@ -38,7 +38,7 @@
 			<plugin name='depthCamera' filename='libgazebo_ros_depth_camera.so'>
 				<focalLength>277.191356</focalLength>
 				<alwaysOn>true</alwaysOn>
-				<updateRate>30</updateRate><imageTopicName>/image_raw</imageTopicName><depthImageTopicName>/depth/image_raw</depthImageTopicName><cameraInfoTopicName>/depth/camera_info</cameraInfoTopicName><depthImageInfoTopicName>/depth/camera_info</depthImageInfoTopicName>			<depthImageCameraInfoTopicName>depth_image_camera_info</depthImageCameraInfoTopicName>
+				<updateRate>30</updateRate><imageTopicName>/DepCamera/image_raw</imageTopicName><depthImageTopicName>/DepCamera/depth/image_raw</depthImageTopicName><cameraInfoTopicName>/DepCamera/depth/camera_info</cameraInfoTopicName><depthImageInfoTopicName>/DepCamera/depth/camera_info</depthImageInfoTopicName>			<depthImageCameraInfoTopicName>/DepCamera/depth_image_camera_info</depthImageCameraInfoTopicName>
 				<pointCloudTopicName>/depth/points</pointCloudTopicName>
 				<cameraName>DepCamera</cameraName>
 				<frameName>camera_frame</frameName>
