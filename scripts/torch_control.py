@@ -22,7 +22,6 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
 from baxter_robot_class import BaxterManipulator
-from depth_image_retriever import DepthMap_retriever
 
 def load_gazebo_models():
 	# Get Models' Path
@@ -35,7 +34,7 @@ def load_gazebo_models():
 	stand_pose=Pose(position=Point(x=-0.22, y=1.0, z=0.0))
 	stand_reference_frame="world"
 
-	depthCam_pose=Pose(position=Point(x=-0.22, y=1.0, z=0.92))
+	depthCam_pose=Pose(position=Point(x=-0.22, y=1.0, z=0.94))
 	depthCam_reference_frame="world"
 	
 	
@@ -142,9 +141,9 @@ def main():
 	# Note that the models reference is the /world frame
 	baxter_manipulator._reset()
 	load_gazebo_models()
-	DepthMapRetriever = DepthMap_retriever()
+	# DepthMapRetriever = DepthMap_retriever()
 	baxter_manipulator.listener()
-	DepthMapRetriever.listener()
+	# DepthMapRetriever.listener()
 	# Remove models from the scene on shutdown
 	rospy.on_shutdown(delete_gazebo_models())	
 	rospy.on_shutdown(baxter_manipulator.clean_shutdown())

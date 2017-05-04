@@ -28,7 +28,7 @@ class DepthMap_retriever(object):
 
 		
 	def listener(self):
-		self.cloudpoint_sub = rospy.Subscriber("/depth/points", PointCloud2, self.cloud_callback)
-		self.dep_image_sub = rospy.Subscriber("/depth/image_raw", Image, self.dep_callback)
+		rospy.Subscriber("/depth/points", PointCloud2, self.cloud_callback)
+		rospy.Subscriber("/depth/image_raw", Image, self.dep_callback)
 		# self.dep_rgb_sub = rospy.Subscriber("/DepCamera/image_raw",Image, self.dep_colour_callback)
 		rospy.spin()
