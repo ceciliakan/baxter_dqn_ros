@@ -197,20 +197,14 @@ class BaxterManipulator(object):
 		rospy.spin()	
 
 	def dep_callback(self,data):
-		#self.depth_msg = numpy.fromstring(data.data, #dtype=numpy.uint8)
-		#I_min = min(self.depth_msg)
-		#I_max = max(self.depth_msg)
-		#if I_min != I_max:
-		#	data.data = 255*(self.depth_msg - I_min) / (I_max - I_min)
-		#	data.encoding = "8UC1"
 		self.cloudpoint_pub.publish(data)
 		cv_depth_img = self.bridge.imgmsg_to_cv2(data, "passthrough")
 		cv_depth_img = cv2.resize(cv_depth_img, (60, 60))
-		cv_depth_img = numpy.array(cv_depth_img, dtype = numpy.float32)
-		cv2.normalize(cv_depth_img, cv_depth_img, 0, 1, cv2.NORM_MINMAX)
-		cv_depth_img = cv_depth_img *255
-		cv_depth_img.astype(numpy.uint8)
-		self.depth_msg = self.bridge.cv2_to_imgmsg(cv_depth_img, "mono8")
+		#cv_depth_img = numpy.array(cv_depth_img, dtype = numpy.float32)
+		#cv2.normalize(cv_depth_img, cv_depth_img, 0, 1, cv2.NORM_MINMAX)
+		#cv_depth_img = cv_depth_img *255
+		#cv_depth_img.astype(numpy.uint8)
+		self.depth_msg = self.bridge.cv2_to_imgmsg(cv_depth_img, "passthrough")
 		self.dep_image_pub.publish(self.depth_msg)
 	
 	def move_vertical( self, direction ):

@@ -31,10 +31,10 @@ def load_gazebo_models():
 	
 	model_path = rospkg.RosPack().get_path('baxter_dqn_ros')+"/models/"
 	
-	stand_pose=Pose(position=Point(x=-0.22, y=1.0, z=0.0))
+	stand_pose=Pose(position=Point(x=0.6, y=0.32, z=0.0))
 	stand_reference_frame="world"
 
-	depthCam_pose=Pose(position=Point(x=-0.22, y=1.0, z=0.94))
+	depthCam_pose=Pose(position=Point(x=0.6, y=0.32, z=0.92))
 	depthCam_reference_frame="world"
 	
 	
