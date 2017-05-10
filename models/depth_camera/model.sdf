@@ -2,8 +2,8 @@
 <sdf version="1.4">
 	<model name="depth_camera">
 		<link name="link">
-		<pose>0 0 0.02 0 0 1.57</pose>
 		<collision name="collision">
+			<pose>0 0 0.02 0 1.22 1.57</pose>
 			<geometry>
 				<box>
 					<size>0.04 0.04 0.04</size>

@@ -31,11 +31,11 @@ def load_gazebo_models():
 	
 	model_path = rospkg.RosPack().get_path('baxter_dqn_ros')+"/models/"
 	
-	stand_pose=Pose(position=Point(x=0.6, y=0.32, z=0.0))
+	stand_pose=Pose(position=Point(x=0.6, y=0.32, z=0.48))
 	stand_reference_frame="world"
 
-	depthCam_pose=Pose(position=Point(x=0.6, y=0.32, z=0.92))
-	depthCam_reference_frame="world"
+	# depthCam_pose=Pose(position=Point(x=0.6, y=0.32, z=0.95))
+	# depthCam_reference_frame="world"
 	
 	
 	# Load Table SDF
@@ -49,9 +49,9 @@ def load_gazebo_models():
 		stand_xml=stand_file.read().replace('\n', '')
 
 	# Load Depth Camera SDF
-		depthCam_xml = ''
-		with open (model_path + "depth_camera/model.sdf", "r") as depthCam_file:
-			depthCam_xml=depthCam_file.read().replace('\n', '')
+	#	depthCam_xml = ''
+	#	with open (model_path + "depth_camera/model.sdf", "r") as depthCam_file:
+	#		depthCam_xml=depthCam_file.read().replace('\n', '')
 
 	# Load objects URDF
 	xml = {}
@@ -101,13 +101,13 @@ def load_gazebo_models():
 		rospy.logerr("Spawn SDF service call failed: {0}".format(e))
 
 	# Spawn Depth Camera SDF
-	rospy.wait_for_service('/gazebo/spawn_sdf_model')
-	try:
-		spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
-		resp_sdf = spawn_sdf("depth_camera", depthCam_xml, "/",
-						depthCam_pose, depthCam_reference_frame)
-	except rospy.ServiceException, e:
-		rospy.logerr("Spawn SDF service call failed: {0}".format(e))
+	# rospy.wait_for_service('/gazebo/spawn_sdf_model')
+	# try:
+		# spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
+		# resp_sdf = spawn_sdf("depth_camera", depthCam_xml, "/",
+			#			depthCam_pose, depthCam_reference_frame)
+	# except rospy.ServiceException, e:
+		# rospy.logerr("Spawn SDF service call failed: {0}".format(e))
 
 	
 	# Spawn object URDF
@@ -127,7 +127,7 @@ def delete_gazebo_models():
 		delete_model = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
 		resp_delete = delete_model("cafe_table")
 		resp_delete = delete_model("camera_stand")
-		resp_delete = delete_model("depth_camera")
+		# resp_delete = delete_model("depth_camera")
 		resp_delete = delete_model("object")
 	except rospy.ServiceException, e:
 		rospy.loginfo("Delete Model service call failed: {0}".format(e))
