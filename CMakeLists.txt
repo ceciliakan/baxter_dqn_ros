@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   gazebo_plugins
   rgbd_launch
+  message_filters
 )
 
 ## System dependencies are found with CMake's conventions

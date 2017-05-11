@@ -9,8 +9,8 @@ import sys
 import time
 import cv2
 from cv_bridge import CvBridge
+import message_filters
 
-from sensor_msgs.msg import PointCloud2
 from sensor_msgs.msg import Image
 from gazebo_msgs.msg import ModelStates
 from gazebo_msgs.msg import ModelState
@@ -39,10 +39,10 @@ class BaxterManipulator(object):
 		# Publishers
 		self._pub_rate = rospy.Publisher('robot/joint_state_publish_rate', UInt16, queue_size=10)
 		self.image_pub = rospy.Publisher("baxter_view",Image,queue_size=4)
+		self.dep_image_pub = rospy.Publisher("DepthMap",Image,queue_size=4)
+
 		self._obj_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
-		
-		self.dep_image_pub = rospy.Publisher("DepthMap", Image, queue_size=4)
-		
+				
 		# Link with baxter interface
 		self._left_arm  = baxter_interface.limb.Limb("left")
 		self._right_arm = baxter_interface.limb.Limb("right")
@@ -157,8 +157,8 @@ class BaxterManipulator(object):
 		self.action()
 		
 	# Recieve image from gazebo - resizes to 60 by 60
-	def img_callback(self,data):
-		self.cv_image = self.bridge.imgmsg_to_cv2(data, "rgba8")
+	def img_callback(self,img_data,dep_data):
+		self.cv_image = self.bridge.imgmsg_to_cv2(img_data, "rgba8")
 		self.cv_image = cv2.resize(self.cv_image, (60, 60))
 		self.cv_image[:,:,3] = 0;
 	
@@ -175,6 +175,11 @@ class BaxterManipulator(object):
 		self.cv_image[0,4,3] = int(255*math.cos(shoulder_angle)/(2.0*math.pi))
 		self.cv_image[0,5,3] = int(255*math.sin(shoulder_angle)/(2.0*math.pi))
 		
+		self.cv_depth_img = self.bridge.imgmsg_to_cv2(dep_data, "passthrough")
+		self.cv_depth_img = self.cv_depth_img[20:240, 100:320]
+		self.cv_depth_img = cv2.resize(self.cv_depth_img, (60, 60))
+
+		
   	# Recieve object pose information - used to determine whether task has been completed		
 	def object_pose_callback(self,data):
 		if self._object_type !=0:
@@ -189,19 +194,14 @@ class BaxterManipulator(object):
 	def listener(self):
 		rospy.Subscriber('chatter', String, self.action_callback)
 		rospy.Subscriber("/gazebo/model_states", ModelStates, self.object_pose_callback)
-		rospy.Subscriber("/cameras/right_hand_camera/image", Image,self.img_callback)
-		
-		rospy.Subscriber("/DepCamera/depth/image_raw", Image, self.dep_callback)
+		self.img_sub = message_filters.Subscriber("/cameras/right_hand_camera/image", Image)
+		self..dep_sub = message_filters.Subscriber("/DepCamera/depth/image_raw", Image)
+		self.timeSync = message_filters.ApproximateTimeSynchronizer([self.img_sub, self.dep_sub] ,4)
+		self.timeSync.registerCallback(img_callback)
 		
 		rospy.spin()	
 
-	def dep_callback(self,data):
-		cv_depth_img = self.bridge.imgmsg_to_cv2(data, "passthrough")
-		cv_depth_img = cv_depth_img[20:240, 100:320]
-		cv_depth_img = cv2.resize(cv_depth_img, (60, 60))
-		self.depth_msg = self.bridge.cv2_to_imgmsg(cv_depth_img, "passthrough")
-		self.dep_image_pub.publish(self.depth_msg)
-	
+
 	def move_vertical( self, direction ):
 
 		# Limb Lengths
@@ -332,7 +332,9 @@ class BaxterManipulator(object):
                 
 		# Publish image with terminal in header
 		self.img_msg = self.bridge.cv2_to_imgmsg(self.cv_image, "rgba8")
+		self.depth_msg = self.bridge.cv2_to_imgmsg(self.cv_depth_img, "passthrough")
 		self.img_msg.header.frame_id = str(self._task_complete)
 		self.image_pub.publish(self.img_msg)
+		self.dep_image_pub.publish(self.depth_msg)
 
 
