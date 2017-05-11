@@ -42,7 +42,6 @@ class BaxterManipulator(object):
 		self._obj_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
 		
 		self.dep_image_pub = rospy.Publisher("DepthMap", Image, queue_size=4)
-		self.cloudpoint_pub = rospy.Publisher("Cloudy", Image, queue_size=40)
 		
 		# Link with baxter interface
 		self._left_arm  = baxter_interface.limb.Limb("left")
@@ -197,13 +196,9 @@ class BaxterManipulator(object):
 		rospy.spin()	
 
 	def dep_callback(self,data):
-		self.cloudpoint_pub.publish(data)
 		cv_depth_img = self.bridge.imgmsg_to_cv2(data, "passthrough")
+		cv_depth_img = cv_depth_img[20:240, 100:320]
 		cv_depth_img = cv2.resize(cv_depth_img, (60, 60))
-		#cv_depth_img = numpy.array(cv_depth_img, dtype = numpy.float32)
-		#cv2.normalize(cv_depth_img, cv_depth_img, 0, 1, cv2.NORM_MINMAX)
-		#cv_depth_img = cv_depth_img *255
-		#cv_depth_img.astype(numpy.uint8)
 		self.depth_msg = self.bridge.cv2_to_imgmsg(cv_depth_img, "passthrough")
 		self.dep_image_pub.publish(self.depth_msg)
 	

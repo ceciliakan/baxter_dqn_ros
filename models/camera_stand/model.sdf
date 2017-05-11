@@ -37,7 +37,7 @@
 		</link>
 
 		<link name="depth_camera">
-			<pose>0 0 1.20 0.37 0.44 1.44</pose>
+			<pose>0 0 1.20 0.37 0.45 1.44</pose>
 			<collision name="collision">				
 				<geometry>
 					<box>
@@ -61,7 +61,7 @@
 					</image>
 					<clip>
 						<near>0.01</near>
-						<far>2</far>
+						<far>1.5</far>
 					</clip>
 				</camera>
 				<always_on>true</always_on>
