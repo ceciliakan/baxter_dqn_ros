@@ -7,12 +7,14 @@ local Body = classic.class('Body')
 -- Architecture based on "Learning Hand-Eye Coordination for Robotic Grasping with Deep Learning and Large-Scale Data Collection"
 
 local histLen = 4
-local numFilters = 64
+local numFilters = 32
 local motorInputs = 6
 local batchSize = 32
 local size = 60
 
-local data = torch.FloatTensor(batchSize, histLen, 4, size, size):uniform() -- Minibatch
+local ELU_convg = 0.5
+
+local data = torch.FloatTensor(batchSize, histLen, 5, size, size):uniform() -- Minibatch
 data[{{}, {}, {4}, {}, {}}]:zero() -- Zero motor inputs
 data[{{}, {}, {4}, {1}, {1, motorInputs}}] = 2 -- 3 motor inputs
 
@@ -25,14 +27,7 @@ function Body:createBody()
 	imageNet:add(nn.Narrow(3, 1, 3)) -- Extract 1st 3 (RGB) channels
 	imageNet:add(nn.View(histLen * 3, size, size):setNumInputDims(4)) -- Concatenate in time
 	imageNet:add(nn.SpatialConvolution(histLen * 3, numFilters, 5, 5, 2, 2, 1, 1))
-	imageNet:add(nn.SpatialBatchNormalization(numFilters))
-	imageNet:add(nn.ReLU(true))
-	imageNet:add(nn.SpatialConvolution(numFilters, numFilters, 5, 5, 2, 2, 1, 1))
-	imageNet:add(nn.SpatialBatchNormalization(numFilters))
-	imageNet:add(nn.ReLU(true))
-	imageNet:add(nn.SpatialConvolution(numFilters, numFilters, 5, 5, 2, 2, 1, 1))
-	imageNet:add(nn.SpatialBatchNormalization(numFilters))
-	imageNet:add(nn.ReLU(true))
+	imageNet:add(nn..ELU(ELU_convg)
 	
 	local convOutputSizes = imageNet:forward(data):size() -- Calculate spatial output size
 
@@ -43,7 +38,6 @@ function Body:createBody()
 	motorNet:add(nn.Narrow(4, 1, motorInputs)) -- Extract motor inputs
 	motorNet:add(nn.View(histLen * motorInputs):setNumInputDims(3)) -- Unroll
 	motorNet:add(nn.Linear(histLen * motorInputs, numFilters)) -- Expand to number of convolutional feature maps
-	motorNet:add(nn.ReLU(true))
 	motorNet:add(nn.Replicate(convOutputSizes[3], 2, 1)) -- Replicate over height (begins spatial tiling)
 	motorNet:add(nn.Replicate(convOutputSizes[4], 3, 2)) -- Replicate over width (completes spatial tiling)
 
