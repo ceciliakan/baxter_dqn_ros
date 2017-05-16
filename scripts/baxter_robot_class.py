@@ -97,13 +97,13 @@ class BaxterManipulator(object):
 	def get_start_positions( self, randomFactor ):
 		# Function to return start positions - right arm set to give view over object
 		# Slight randomisation in start positions
-		randomRightArray = [random.uniform( -randomFactor, randomFactor ) for i in range(0,7)]
+		# randomRightArray = [random.uniform( -randomFactor, randomFactor ) for i in range(0,7)]
 		randomLeftArray  = [random.uniform( -randomFactor, randomFactor ) for i in range(0,7)]
 	
 		rest_pos_right = [math.pi/3.0, -0.55, math.pi/4.0, math.pi/8.0 + 0.75, 0.0, 1.26 - math.pi/4.0, 0.0]
 		rest_pos_left  = [0.0, -0.55, 0.0, 0.75, 0.0, math.pi/2.0 - 0.2, 0.0]
 		
-		rest_pos_right[:] = [x+y for x, y in zip( rest_pos_right, randomRightArray )] 
+		# rest_pos_right[:] = [x+y for x, y in zip( rest_pos_right, randomRightArray )] 
 		rest_pos_left[:]  = [x+y for x, y in zip( rest_pos_left, randomLeftArray )]  
 		
 		return rest_pos_right, rest_pos_left

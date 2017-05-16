@@ -57,7 +57,7 @@
   <run_depend>rospy</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>rgbd_launch</run_depend>
-  <run_depend>message_filters<run_depend>
+  <run_depend>message_filters</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

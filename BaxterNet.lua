@@ -12,7 +12,7 @@ local motorInputs = 6
 local batchSize = 32
 local size = 60
 
-local ELU_convg = 0.5
+local ELU_convg = 1.0
 
 local data = torch.FloatTensor(batchSize, histLen, 5, size, size):uniform() -- Minibatch
 data[{{}, {}, {4}, {}, {}}]:zero() -- Zero motor inputs
@@ -29,7 +29,16 @@ function Body:createBody()
 	imageNet:add(nn.SpatialConvolution(histLen * 3, numFilters, 5, 5, 2, 2, 1, 1))
 	imageNet:add(nn..ELU(ELU_convg)
 	
-	local convOutputSizes = imageNet:forward(data):size() -- Calculate spatial output size
+
+    
+    local depthNet = nn.Sequential()
+    depthNet:add(nn.Narrow(3, 5, 1)) -- Extract 5th channels
+    depthNet:add(nn.View(histLen, size, size):setNumInputDims(4))
+    depthNet:add(nn.SpatialConvolution(histLen, numFilters, 5, 5, 2, 2, 1, 1))
+    depthNet:add(nn..ELU(ELU_convg)
+            
+    local convOutputSizes = imageNet:forward(data):size() -- Calculate spatial output size    
+
 
 	local motorNet = nn.Sequential()
 	motorNet:add(nn.Narrow(3, 4, 1)) -- Extract 4th channel
@@ -43,6 +52,8 @@ function Body:createBody()
 
 	local branches = nn.ConcatTable() -- Apply each module to input
 	branches:add(imageNet)
+        
+        
 	branches:add(motorNet)
 
 	local net = nn.Sequential()
