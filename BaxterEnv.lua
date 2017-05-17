@@ -147,7 +147,9 @@ function BaxterEnv:msgToImg()
 	
 	local dep_screen = torch.reshape(dep_raw_msg, 1, self.img_size,self.img_size)
 
-	self.screen = torch.cat({rgb_screen, dep_screen}, 3)
+	self.screen = torch.cat({rgb_screen, dep_screen}, 1)
+	
+	self.signal = task --testing use
 end
 
 -- 1 state returned, of type 'int', of dimensionality 1 x self.img_size x self.img_size, between 0 and 1

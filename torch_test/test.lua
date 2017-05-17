@@ -15,13 +15,16 @@ while true do
 	-- first three channels of image contain rgb information
 	-- 4th channel contains motor angle information
 	imgd = demo.screen[{{1,3},{},{}}]
+	imgd:mul(255)
 	image.display(imgd)
 	
-	imgdep = demo.screen[{1,3},{},{}]
+	imgdep = demo.screen[{ 5,{},{} }]
+	imgdep:mul(255)
+	image.display(imgdep)
 	-- wrist motor position (normalised to 255)
 	print(demo.screen[4][1][1])
-	print(demo.task)
-	if (demo.task == 1) then
+	print(demo.signal)
+	if (demo.signal == 1) then
 		print("Task Completed")
 		demo:sendMessage("reset")
 		demo:waitForResponse("reset")

@@ -24,11 +24,13 @@ th main.lua -env BaxterEnv -modelBody BaxterNet -doubleQ false -duel false -boot
 + training speed at 5000 steps
 disable gui + ratio: 100 steps/min
 disable gui + default ratio: 40 steps/min
-enable gui + ratio = /min
+enable gui + ratio = 100 steps/min
 
 
 ++ Implement net input test method (visualisation)
+- adapted test.lua for BaxterEnv
 
+TODO: test/debug all written code
 ++++++++
 Setting for gui/headless/use_sim_time etc in
 ~/ros_ws/src/baxter_simulator/baster_gazebo/launch/baxter_world.launch 
