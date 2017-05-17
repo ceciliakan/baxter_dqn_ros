@@ -1,0 +1,38 @@
+16 May 22:34
+==================
+++ 1st experiment train run
+- Tom's code, fixed right arm position (remove randomness added)
+- Random factor for get_start_position() = 0.15
+- note:
+1. original random factor (0.05) limits movement -> for the range of movement arm would not be able to pick up object regardless -> 
+2. randomness in right arm removed -> needs increased randomness in left arm
+3. training it to move left arm, so randomness should be in left arm?
+4. Needs to investigate fissure movement - left forearm bends after attempt then forced back to position for move_vertical() -> can be fixed?
+
++ training speed: 10000 trials /4hrs
+=================
+17 May
+++ Speed up test
+- run gzserver not gzclient -> set gui to false
+- log frequency in Atari: 100 (-progFreq option)
+- increase ratio of simulation time to real-time -> set real time update rate = 0
+
+++++++++
+Setting for gui/headless/use_sim_time etc in
+~/ros_ws/src/baxter_simulator/baster_gazebo/launch/baxter_world.launch 
+++++++++
+Gazebo world physics properties
+- The real time update rate parameter specifies in Hz the number of physics updates that will be attempted per second. If this number is set to zero, it will run as fast as it can. Note that the product of real time update rate and max step size represents the target real time factor, or ratio of simulation time to real-time.
+- The max step size specifies the time duration in seconds of each physics update step.
+
+<real_time_update_rate> (default = 1000.0) tag in
+~/ros_ws/src/baxter_simulator/baster_gazebo/worlds/baxter.world
+++++++++
+Atari Setup.lua params (selection)
+114  cmd:option('-tau', 30000, 'Steps between target net updates τ') -- Tuned DDQN target net update interval (3x that of DQN)
+126   cmd:option('-learnStart', 50000, 'Number of steps after which learning starts')
+129  cmd:option('-progFreq', 10000, 'Interval of steps between reporting progress')
+130  cmd:option('-reportWeights', 'false', 'Report weight and weight gradient statistics')
+132  cmd:option('-valFreq', 250000, 'Interval of steps between validating agent') -- valFreq steps is used as an epoch, hence #epochs = steps/valFreq
+133  cmd:option('-valSteps', 125000, 'Number of steps to use for validation')
+
