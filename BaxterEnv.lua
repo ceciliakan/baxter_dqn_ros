@@ -137,10 +137,16 @@ function BaxterEnv:msgToImg()
 			self.reordered_Data[10800 + i/4] = raw_msg[i]/255
 		end
 	end
+
+	local rgb_screen = torch.reshape(self.reordered_Data,4,self.img_size,self.img_size)
+	
+	local max_dep = torch.max(dep_raw_msg)
+	local min_dep = torch.min(dep_raw_msg)
+	dep_raw_msg:add(-min_dep)
+	dep_raw_msg:div(max_dep - min_dep)
 	
 	local dep_screen = torch.reshape(dep_raw_msg, 1, self.img_size,self.img_size)
-	
-	local rgb_screen = torch.reshape(self.reordered_Data,4,self.img_size,self.img_size)
+
 	self.screen = torch.cat({rgb_screen, dep_screen}, 3)
 end
 

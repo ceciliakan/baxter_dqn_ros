@@ -181,3 +181,96 @@ Graphs: https://github.com/torch/nn/blob/master/doc/transfer.md
 Fast and Accurate Deep Network Learning by Exponential Linear Units (ELUs)
 https://arxiv.org/abs/1511.07289
 
+=================================================
+ConcatTable
+
+mlp= nn.ConcatTable()
+mlp:add(nn.Linear(5,2))
+mlp:add(nn.Linear(5,3))
+
+pred=mlp:forward(torch.randn(5));
+for i,k in pairs(pred) do print(i,k); end
+
+which gives the output:
+
+1
+-0.4073
+ 0.0110
+[torch.Tensor of dimension 2]
+
+2
+ 0.0027
+-0.0598
+-0.1189
+[torch.Tensor of dimension 3] 
+
+====================================================
+JoinTable
+
+module = JoinTable(dimension, nInputDims)
+
+Creates a module that takes a list of Tensors as input and outputs a Tensor by joining them together along dimension dimension.
+
+The optional parameter nInputDims allows to specify the number of dimensions that this module will receive. This makes it possible to forward both minibatch and non-minibatch tensors through the same module.
+
+module = nn.JoinTable(2,2)
+
+x=torch.randn(3,1)
+y=torch.randn(3,1)
+
+mx=torch.randn(2,3,1)
+my=torch.randn(2,3,1)
+
+print(module:forward{x,y})
+print(module:forward{mx,my})
+
+gives the output:
+
+ 0.4288  1.2002
+-1.4084 -0.7960
+-0.2091  0.1852
+[torch.DoubleTensor of dimension 3x2]
+
+(1,.,.) =
+  0.5561  0.1228
+ -0.6792  0.1153
+  0.0687  0.2955
+
+(2,.,.) =
+  2.5787  1.8185
+ -0.9860  0.6756
+  0.1989 -0.4327
+[torch.DoubleTensor of dimension 2x3x2]
+
+A more complicated example:
+
+
+mlp=nn.Sequential();       --Create a network that takes a Tensor as input
+ c=nn.ConcatTable()        --The same Tensor goes through two different Linear
+ c:add(nn.Linear(10,3))    --Layers in Parallel
+ c:add(nn.Linear(10,7))
+mlp:add(c)                 --Outputing a table with 2 elements
+ p=nn.ParallelTable()      --These tables go through two more linear layers
+ p:add(nn.Linear(3,2))     -- separately.
+ p:add(nn.Linear(7,1)) 
+mlp:add(p) 
+mlp:add(nn.JoinTable(1))   --Finally, the tables are joined together and output. 
+
+pred=mlp:forward(torch.randn(10))
+print(pred)
+
+for i=1,100 do             -- A few steps of training such a network.. 
+ x=torch.ones(10);
+ y=torch.Tensor(3); y:copy(x:narrow(1,1,3))
+ pred=mlp:forward(x)
+
+ criterion= nn.MSECriterion()
+ local err=criterion:forward(pred,y)
+ local gradCriterion = criterion:backward(pred,y);
+ mlp:zeroGradParameters();
+ mlp:backward(x, gradCriterion); 
+ mlp:updateParameters(0.05);
+
+ print(err)
+end
+

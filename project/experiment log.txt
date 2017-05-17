@@ -1,3 +1,6 @@
+Command to run Atari:
+th main.lua -env BaxterEnv -modelBody BaxterNet -doubleQ false -duel false -bootstraps 0 -PALpha 0
+
 16 May 22:34
 ==================
 ++ 1st experiment train run
@@ -9,13 +12,22 @@
 3. training it to move left arm, so randomness should be in left arm?
 4. Needs to investigate fissure movement - left forearm bends after attempt then forced back to position for move_vertical() -> can be fixed?
 
-+ training speed: 10000 trials /4hrs
++ training speed: 10000 steps /4hrs -> 42/min
 =================
 17 May
 ++ Speed up test
 - run gzserver not gzclient -> set gui to false
-- log frequency in Atari: 100 (-progFreq option)
 - increase ratio of simulation time to real-time -> set real time update rate = 0
+- log frequency in Atari: 100 (-progFreq option) (to time)
+
+***REPORT MATERIAL***
++ training speed at 5000 steps
+disable gui + ratio: 100 steps/min
+disable gui + default ratio: 40 steps/min
+enable gui + ratio = /min
+
+
+++ Implement net input test method (visualisation)
 
 ++++++++
 Setting for gui/headless/use_sim_time etc in
