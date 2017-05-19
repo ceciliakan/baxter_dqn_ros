@@ -195,9 +195,9 @@ class BaxterManipulator(object):
 		rospy.Subscriber('chatter', String, self.action_callback)
 		rospy.Subscriber("/gazebo/model_states", ModelStates, self.object_pose_callback)
 		self.img_sub = message_filters.Subscriber("/cameras/right_hand_camera/image", Image)
-		self..dep_sub = message_filters.Subscriber("/DepCamera/depth/image_raw", Image)
-		self.timeSync = message_filters.ApproximateTimeSynchronizer([self.img_sub, self.dep_sub] ,4)
-		self.timeSync.registerCallback(img_callback)
+		self.dep_sub = message_filters.Subscriber("/DepCamera/depth/image_raw", Image)
+		self.timeSync = message_filters.ApproximateTimeSynchronizer([self.img_sub, self.dep_sub] ,4, 0.01)
+		self.timeSync.registerCallback(self.img_callback)
 		
 		rospy.spin()	
 
