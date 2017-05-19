@@ -155,15 +155,8 @@ function BaxterEnv:msgToImg()
 		end
 	end
 	
-	print("self.reordered_Data:")
-	print(self.reordered_Data:size())
-
-	local rgb_screen = torch.reshape(self.reordered_Data,4,self.img_size,self.img_size)
-
-	local dep_screen = torch.reshape(self.reordered_dep, 4, self.img_size,self.img_size)
-	
-	self.screen[{{1,4},{},{}}] = rgb_screen
-	self.screen[{{5,8},{},{}}] = dep_screen
+	self.screen[{{1,4},{},{}}] = torch.reshape(self.reordered_Data,4,self.img_size,self.img_size)
+	self.screen[{{5,8},{},{}}] = torch.reshape(self.reordered_dep, 4, self.img_size,self.img_size)
 
 	self.signal = task --testing use
 end
