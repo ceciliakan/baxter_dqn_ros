@@ -1,6 +1,13 @@
 # baxter_dqn 
 ### Work in progress
 
+
+Year 4 project work
+Title: Model Dropout for Learning Visuomotor Control Policies
+
+Based on baxter_dqn_ros (https://github.com/powertj/baxter_dqn.git)
+
+
 Reinforcement learning in a simulated environment for the control of Baxter robot manipulator. 
 
 `BaxterEnv.lua` interfaces with the Atari DQN to provide a custom environment conforming to the following [API](https://github.com/Kaixhin/rlenvs). Passes a resized 4x60x60 tensor from the simulator into the DQN, consisting of an RGB image and a 4th channel containing motor position information, and in return passes commands back to simulator. 
@@ -14,6 +21,8 @@ An attempt to pickup the object results in termination, as unsuccessful attempts
 - [baxter simulator installation](http://sdk.rethinkrobotics.com/wiki/Simulator_Installation)
 - Torch7
 - torch-ros
+- rgbd_launch
+- qtlua (to use test.lua for network input validation)
 
 ## Installation
 Clone [Atari](https://github.com/Kaixhin/Atari), place BaxterNet.lua and BaxterEnv.lua in Atari folder.
@@ -45,8 +54,4 @@ The origin of the objects is not always at their centre. This results in some va
 
 ## Acknowledgements
 [Kai Arulkumaran](https://github.com/Kaixhin) for his assistance
-
-## Reference 
-Network architecture based on:
-[Learning Hand-Eye Coordination for Robotic Grasping with Deep Learning and Large-Scale Data Collection](https://arxiv.org/abs/1603.02199) Sergey Levine et al. 2016
 
