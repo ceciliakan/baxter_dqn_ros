@@ -130,28 +130,24 @@ end
 function BaxterEnv:msgToImg()
 	-- Sort message data - pixel values come through in order r[1], g[1], b[1], a[1], r[2], b[2], g[2], .. etc with the alpha channel representing motor angle information
 	
-	--[[
-	local max_dep = torch.max(dep_raw_msg)
+	--[[local max_dep = torch.max(dep_raw_msg)
 	local min_dep = torch.min(dep_raw_msg)
-	print("max min:")
-	print(max_dep)
-	print(min_dep)
-	dep_raw_msg:add(-min_dep)
-	dep_raw_msg:div(max_dep - min_dep)
-	--]]
+	dep_raw_msg = (dep_raw_msg - min_dep) / (max_dep - min_dep)
+	]]--
+	
 	for i = 1, 14400 do
 		if i%4==1 then
 			self.reordered_Data[(i+3)/4] = raw_msg[i]/255
-			self.reordered_dep[(i+3)/4] = dep_raw_msg[i]
+			self.reordered_dep[(i+3)/4] = dep_raw_msg[i] /255
 		elseif i%4==2 then
 			self.reordered_Data[3600 + (i+2)/4] = raw_msg[i]/255
-			self.reordered_dep[3600 + (i+2)/4] = dep_raw_msg[i]
+			self.reordered_dep[3600 + (i+2)/4] = dep_raw_msg[i]/255
 		elseif i%4 == 3 then
 			self.reordered_Data[7200 + (i+1)/4] = raw_msg[i]/255
-			self.reordered_dep[7200 + (i+1)/4] = dep_raw_msg[i]
+			self.reordered_dep[7200 + (i+1)/4] = dep_raw_msg[i]/255
 		else
 			self.reordered_Data[10800 + i/4] = raw_msg[i]/255
-			self.reordered_dep[10800 + i/4] = dep_raw_msg[i]
+			self.reordered_dep[10800 + i/4] = dep_raw_msg[i]/255
 		end
 	end
 	

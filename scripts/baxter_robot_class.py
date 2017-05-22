@@ -159,6 +159,7 @@ class BaxterManipulator(object):
 	# Recieve image from gazebo - resizes to 60 by 60
 	def img_callback(self,img_data,dep_data):
 		self.cv_image = self.bridge.imgmsg_to_cv2(img_data, "rgba8")
+		self.cv_image = self.cv_image[300:800, 100:600]
 		self.cv_image = cv2.resize(self.cv_image, (60, 60))
 		self.cv_image[:,:,3] = 0;
 	
@@ -176,7 +177,7 @@ class BaxterManipulator(object):
 		self.cv_image[0,5,3] = int(255*math.sin(shoulder_angle)/(2.0*math.pi))
 		
 		self.cv_depth_img = self.bridge.imgmsg_to_cv2(dep_data, "passthrough")
-		self.cv_depth_img = self.cv_depth_img[20:240, 100:320] # crop away uninformative outer region of depth map
+		self.cv_depth_img = self.cv_depth_img[60:240, 100:280] # crop away uninformative outer region of depth map
 		self.cv_depth_img = cv2.resize(self.cv_depth_img, (60, 60))
 
 		

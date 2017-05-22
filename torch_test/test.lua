@@ -12,7 +12,7 @@ end
 
 while true do
 	sleep(1)
-	demo:step(0)
+	demo:step(0) -- required to publish processed images
 	ros.spinOnce()
 	demo:msgToImg()
 	-- first three channels of image contain rgb information
@@ -23,6 +23,14 @@ while true do
 	image.display(imgd)
 	
 	imgdep = demo.screen[{ {5,8},{},{} }]
+	imgdep:mul(255)
+	subtensor = imgdep[{3, {1,20}, {1,20}}] 
+	
+	print("Check for subtensor values in depth image:")	print(subtensor)
+	print("max min:")
+	print(torch.max(imgdep))
+	print(torch.min(imgdep))
+
 	imgdep1 = imgdep[{{1,3},{},{}}]
 	imgdep2 = imgdep[{3,{},{}}] + imgdep[{4,{},{}}]
 	image.display(imgdep)
@@ -31,7 +39,9 @@ while true do
 	
 
 	-- wrist motor position (normalised to 255)
+	print("1st motor data:")
 	print(demo.screen[4][1][1])
+	print("task completion:")
 	print(demo.signal)
 	if (demo.signal == 1) then
 		print("Task Completed")
