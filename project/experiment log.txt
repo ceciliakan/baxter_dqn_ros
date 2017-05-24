@@ -1,3 +1,17 @@
+24th May
+
+++ TRAINING HYPERPARAMS
+th main.lua -env BaxterEnv -modelBody BaxterNet -bootstraps 0 -PALpha 0 -steps 200000 -hiddenSize 512 -memSize 50000 -epsilonSteps 50000 -tau 10000 -learnStart 10000 -progFreq 1000 -valFreq 5000 -valSteps 500
+
+- steps: ~2 days
+=========================
+22nd May
+
+- recropped image
+
+- Depth image: no colour representation of deepest colour
+--> black becomes white (black)
+
 ===========================================================
 19th May
 
