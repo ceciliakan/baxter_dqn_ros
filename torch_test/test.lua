@@ -22,20 +22,30 @@ while true do
 	
 	image.display(imgd)
 	
-	imgdep = demo.screen[{ {5,8},{},{} }]
+	imgdep = demo.screen[{ 5,{},{} }]
 	imgdep:mul(255)
-	subtensor = imgdep[{3, {1,20}, {1,20}}] 
+	subtensor = imgdep[{ {1,20}, {1,20} }] 
 	
+	print("bit data")
+	print("bit1")
+	print(demo.dep_bit1)
+	print('bit2')
+	print(demo.dep_bit2)
+	print('shiftbit2')
+	print(demo.shiftbit2)
+	print('or bit12')
+	print(demo.or_bit12)
+	
+	print('endian')
+	print(demo.dep_endian)
 	print("Check for subtensor values in depth image:")	print(subtensor)
 	print("max min:")
 	print(torch.max(imgdep))
 	print(torch.min(imgdep))
 
-	imgdep1 = imgdep[{{1,3},{},{}}]
-	imgdep2 = imgdep[{3,{},{}}] + imgdep[{4,{},{}}]
+	--imgdep2 = imgdep[{1,{},{}}] + imgdep[{2,{},{}}]
 	image.display(imgdep)
-	image.display(imgdep1)
-	image.display(imgdep2)
+	--image.display(imgdep2)
 	
 
 	-- wrist motor position (normalised to 255)

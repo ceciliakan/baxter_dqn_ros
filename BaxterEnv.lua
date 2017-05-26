@@ -3,6 +3,8 @@ ros.init('DQN_comms')
 local classic = require 'classic'
 require 'image'
 
+local bit = require("bit")
+
 torch.setdefaulttensortype('torch.FloatTensor')
 
 local BaxterEnv, super = classic.class('BaxterEnv', Env)
@@ -33,9 +35,9 @@ function BaxterEnv:_init(opts)
 
 	--setup state variables
 	self.img_size = 60
-	self.screen = torch.FloatTensor(8,self.img_size,self.img_size):zero()
+	self.screen = torch.FloatTensor(5,self.img_size,self.img_size):zero()
 	self.reordered_Data = raw_msg
-	self.reordered_dep = dep_raw_msg
+	self.reordered_dep = torch.FloatTensor(7200)
 
 	
 	--setup ros node and spinner (processes queued send and receive topics)
@@ -129,30 +131,40 @@ end
 
 function BaxterEnv:msgToImg()
 	-- Sort message data - pixel values come through in order r[1], g[1], b[1], a[1], r[2], b[2], g[2], .. etc with the alpha channel representing motor angle information
-	
-	--[[local max_dep = torch.max(dep_raw_msg)
-	local min_dep = torch.min(dep_raw_msg)
-	dep_raw_msg = (dep_raw_msg - min_dep) / (max_dep - min_dep)
-	]]--
-	
+	local dep_byteH = 0
+
 	for i = 1, 14400 do
 		if i%4==1 then
 			self.reordered_Data[(i+3)/4] = raw_msg[i]/255
-			self.reordered_dep[(i+3)/4] = dep_raw_msg[i] /255
 		elseif i%4==2 then
 			self.reordered_Data[3600 + (i+2)/4] = raw_msg[i]/255
-			self.reordered_dep[3600 + (i+2)/4] = dep_raw_msg[i]/255
 		elseif i%4 == 3 then
 			self.reordered_Data[7200 + (i+1)/4] = raw_msg[i]/255
-			self.reordered_dep[7200 + (i+1)/4] = dep_raw_msg[i]/255
+			self.reordered_dep[(i+1)/4] = dep_raw_msg[i]
 		else
 			self.reordered_Data[10800 + i/4] = raw_msg[i]/255
-			self.reordered_dep[10800 + i/4] = dep_raw_msg[i]/255
+			self.reordered_dep[3600 + i/4] = dep_raw_msg[i]
 		end
 	end
 	
+	--[[self.dep_bit1 = reordered_dep[5400]
+	self.dep_bit2 = reordered_dep[1800]
+	self.shiftbit2 =bit.lshift(self.dep_bit2, 3)
+	self.or_bit12 = self.shiftbit2 + self.dep_bit1
+	
+	
+	for i = 1, 3600 do
+		--dep_byteH = bit.lshift(reordered_dep[3600 + i], 3)
+		self.dep_Data[i] = reordered_dep[3600 + i] * 256 + reordered_dep[i]
+	end
+	
+	local max_dep = torch.max(self.dep_Data)
+	local min_dep = torch.min(self.dep_Data)
+	self.dep_Data = (self.dep_Data - min_dep) / (max_dep - min_dep)
+	]]--
+
 	self.screen[{{1,4},{},{}}] = torch.reshape(self.reordered_Data,4,self.img_size,self.img_size)
-	self.screen[{{5,8},{},{}}] = torch.reshape(self.reordered_dep, 4, self.img_size,self.img_size)
+	self.screen[{ 5,{},{} }] = torch.reshape(self.reordered_dep, 2, self.img_size,self.img_size)
 
 	self.signal = task --testing use
 end
