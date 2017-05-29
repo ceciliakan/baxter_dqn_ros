@@ -20,11 +20,14 @@ while true do
 	imgd = demo.screen[{{1,3},{},{}}]
 	imgd:mul(255)
 	
-	image.display(imgd)
+	--image.display(imgd)
+	print('Image subtensor:')
+	print(imgd[{ 2, {30,40}, {30,40} }])
 	
+
 	imgdep = demo.screen[{ {5,6},{},{} }]
 	imgdep:mul(255)
-	subtensor = imgdep[{ 1, {1,20}, {1,20} }] 
+	subtensor = imgdep[{ 2, {1,20}, {1,20} }] 
 	
 	print('endian')
 	print(demo.dep_endian)
@@ -33,8 +36,7 @@ while true do
 	print(torch.max(imgdep))
 	print(torch.min(imgdep))
 
-	--imgdep2 = imgdep[{1,{},{}}] + imgdep[{2,{},{}}]
-	image.display(imgdep)
+	--image.display(imgdep)
 	--image.display(imgdep2)
 	
 

@@ -128,7 +128,7 @@ end
 
 function BaxterEnv:msgToImg()
 	-- Sort message data - pixel values come through in order r[1], g[1], b[1], a[1], r[2], b[2], g[2], .. etc with the alpha channel representing motor angle information
-	local reordered_Data = raw_msg
+	local reordered_Data = torch.FloatTensor(14400)
 	local reordered_dep = torch.FloatTensor(7200)
 	
 	for i = 1, 14400 do
@@ -145,7 +145,8 @@ function BaxterEnv:msgToImg()
 		end
 	end
 	
-	--[[self.dep_bit1 = reordered_dep[5400]
+	--[[
+	self.dep_bit1 = reordered_dep[5400]
 	self.dep_bit2 = reordered_dep[1800]
 	self.shiftbit2 =bit.lshift(self.dep_bit2, 3)
 	self.or_bit12 = self.shiftbit2 + self.dep_bit1
@@ -170,10 +171,10 @@ end
 
 -- 1 state returned, of type 'int', of dimensionality 6 x self.img_size x self.img_size, between 0 and 1
 function BaxterEnv:getStateSpec()
-	return {'int', {6, self.img_size, self.img_size}, {0, 1}}
+	return {'real', {6, self.img_size, self.img_size}, {0, 1}}
 end
 
--- 1 action required, of type 'int', of dimensionality 1, between 0 and 2
+-- 1 action required, of type 'int', of dimensionality 1, between 0 and 6
 function BaxterEnv:getActionSpec()
 	return {'int', 1, {0, 6}}
 end
