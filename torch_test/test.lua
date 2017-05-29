@@ -22,19 +22,9 @@ while true do
 	
 	image.display(imgd)
 	
-	imgdep = demo.screen[{ 5,{},{} }]
+	imgdep = demo.screen[{ {5,6},{},{} }]
 	imgdep:mul(255)
-	subtensor = imgdep[{ {1,20}, {1,20} }] 
-	
-	print("bit data")
-	print("bit1")
-	print(demo.dep_bit1)
-	print('bit2')
-	print(demo.dep_bit2)
-	print('shiftbit2')
-	print(demo.shiftbit2)
-	print('or bit12')
-	print(demo.or_bit12)
+	subtensor = imgdep[{ 1, {1,20}, {1,20} }] 
 	
 	print('endian')
 	print(demo.dep_endian)

@@ -35,11 +35,8 @@ function BaxterEnv:_init(opts)
 
 	--setup state variables
 	self.img_size = 60
-	self.screen = torch.FloatTensor(5,self.img_size,self.img_size):zero()
-	self.reordered_Data = raw_msg
-	self.reordered_dep = torch.FloatTensor(7200)
-
-	
+	self.screen = torch.FloatTensor(6,self.img_size,self.img_size):zero()
+		
 	--setup ros node and spinner (processes queued send and receive topics)
 	self.spinner = ros.AsyncSpinner()
 	self.spinner:start()
@@ -131,19 +128,20 @@ end
 
 function BaxterEnv:msgToImg()
 	-- Sort message data - pixel values come through in order r[1], g[1], b[1], a[1], r[2], b[2], g[2], .. etc with the alpha channel representing motor angle information
-	local dep_byteH = 0
-
+	local reordered_Data = raw_msg
+	local reordered_dep = torch.FloatTensor(7200)
+	
 	for i = 1, 14400 do
 		if i%4==1 then
-			self.reordered_Data[(i+3)/4] = raw_msg[i]/255
+			reordered_Data[(i+3)/4] = raw_msg[i]/255
 		elseif i%4==2 then
-			self.reordered_Data[3600 + (i+2)/4] = raw_msg[i]/255
+			reordered_Data[3600 + (i+2)/4] = raw_msg[i]/255
 		elseif i%4 == 3 then
-			self.reordered_Data[7200 + (i+1)/4] = raw_msg[i]/255
-			self.reordered_dep[(i+1)/4] = dep_raw_msg[i]
+			reordered_Data[7200 + (i+1)/4] = raw_msg[i]/255
+			reordered_dep[(i+1)/4] = dep_raw_msg[i]
 		else
-			self.reordered_Data[10800 + i/4] = raw_msg[i]/255
-			self.reordered_dep[3600 + i/4] = dep_raw_msg[i]
+			reordered_Data[10800 + i/4] = raw_msg[i]/255
+			reordered_dep[3600 + i/4] = dep_raw_msg[i]
 		end
 	end
 	
@@ -157,21 +155,22 @@ function BaxterEnv:msgToImg()
 		--dep_byteH = bit.lshift(reordered_dep[3600 + i], 3)
 		self.dep_Data[i] = reordered_dep[3600 + i] * 256 + reordered_dep[i]
 	end
-	
-	local max_dep = torch.max(self.dep_Data)
-	local min_dep = torch.min(self.dep_Data)
-	self.dep_Data = (self.dep_Data - min_dep) / (max_dep - min_dep)
 	]]--
 
-	self.screen[{{1,4},{},{}}] = torch.reshape(self.reordered_Data,4,self.img_size,self.img_size)
-	self.screen[{ 5,{},{} }] = torch.reshape(self.reordered_dep, 2, self.img_size,self.img_size)
+	
+	local max_dep = torch.max(reordered_dep)
+	local min_dep = torch.min(reordered_dep)
+	reordered_dep = (reordered_dep - min_dep) / (max_dep - min_dep)
+	
+	self.screen[{ {1,4},{},{} }] = torch.reshape(reordered_Data,4,self.img_size,self.img_size)
+	self.screen[{ {5,6},{},{} }] = torch.reshape(reordered_dep, 2, self.img_size,self.img_size)
 
-	self.signal = task --testing use
+	-- self.signal = task --testing use
 end
 
--- 1 state returned, of type 'int', of dimensionality 1 x self.img_size x self.img_size, between 0 and 1
+-- 1 state returned, of type 'int', of dimensionality 6 x self.img_size x self.img_size, between 0 and 1
 function BaxterEnv:getStateSpec()
-	return {'int', {4, self.img_size, self.img_size}, {0, 1}}
+	return {'int', {6, self.img_size, self.img_size}, {0, 1}}
 end
 
 -- 1 action required, of type 'int', of dimensionality 1, between 0 and 2
