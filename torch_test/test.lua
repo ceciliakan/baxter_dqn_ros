@@ -17,10 +17,12 @@ while true do
 	demo:msgToImg()
 	-- first three channels of image contain rgb information
 	-- 4th channel contains motor angle information
+	print('tensor size')
+	print(demo.screen:size())
 	imgd = demo.screen[{{1,3},{},{}}]
 	imgd:mul(255)
 	
-	--image.display(imgd)
+	image.display(imgd)
 	print('Image subtensor:')
 	print(imgd[{ 2, {30,40}, {30,40} }])
 	
@@ -36,7 +38,7 @@ while true do
 	print(torch.max(imgdep))
 	print(torch.min(imgdep))
 
-	--image.display(imgdep)
+	image.display(imgdep)
 	--image.display(imgdep2)
 	
 
