@@ -36,7 +36,7 @@ function BaxterEnv:_init(opts)
 	--setup state variables
 	self.img_size = 60
 	self.screen = torch.FloatTensor(6,self.img_size,self.img_size):zero()
-		
+
 	--setup ros node and spinner (processes queued send and receive topics)
 	self.spinner = ros.AsyncSpinner()
 	self.spinner:start()
@@ -138,13 +138,13 @@ function BaxterEnv:msgToImg()
 			reordered_Data[3600 + (i+2)/4] = raw_msg[i]/255
 		elseif i%4 == 3 then
 			reordered_Data[7200 + (i+1)/4] = raw_msg[i]/255
-			reordered_dep[(i+1)/4] = dep_raw_msg[i]
+			reordered_dep[(i+1)/4] = dep_raw_msg[i]/255
 		else
 			reordered_Data[10800 + i/4] = raw_msg[i]/255
-			reordered_dep[3600 + i/4] = dep_raw_msg[i]
+			reordered_dep[3600 + i/4] = dep_raw_msg[i]/255
 		end
 	end
-	
+
 	--[[
 	self.dep_bit1 = reordered_dep[5400]
 	self.dep_bit2 = reordered_dep[1800]
@@ -154,15 +154,11 @@ function BaxterEnv:msgToImg()
 	
 	for i = 1, 3600 do
 		--dep_byteH = bit.lshift(reordered_dep[3600 + i], 3)
-		self.dep_Data[i] = reordered_dep[3600 + i] * 256 + reordered_dep[i]
+		sf[3600+ i] = bit.lshift(reordered_dep[3600 + i] , 3)
+		sf[i] = bit.lshift(reordered_dep[i] , 3)
 	end
-	]]--
+	--]]
 
-	
-	local max_dep = torch.max(reordered_dep)
-	local min_dep = torch.min(reordered_dep)
-	reordered_dep = (reordered_dep - min_dep) / (max_dep - min_dep)
-	
 	self.screen[{ {1,4},{},{} }] = torch.reshape(reordered_Data,4,self.img_size,self.img_size)
 	self.screen[{ {5,6},{},{} }] = torch.reshape(reordered_dep, 2, self.img_size,self.img_size)
 
@@ -186,7 +182,7 @@ end
 
 -- Min and max reward
 function BaxterEnv:getRewardSpec()
-	return 0, 1
+	return 0, 1, 10
 end
 
 
@@ -222,8 +218,8 @@ function BaxterEnv:step(action)
 	-- get next message
 	self:msgToImg()
 	-- Check task condition
-	if task == 1 then	
-  		reward = 1
+	if task == 1 or task == 10 then	
+		reward = task
 	end	
 	
 	step = step + 1

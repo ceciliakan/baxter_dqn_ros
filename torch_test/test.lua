@@ -28,20 +28,18 @@ while true do
 	
 
 	imgdep = demo.screen[{ {5,6},{},{} }]
-	imgdep:mul(255)
-	subtensor = imgdep[{ 2, {1,20}, {1,20} }] 
+	--imgdep:mul(255)	
 	
 	print('endian')
 	print(demo.dep_endian)
-	print("Check for subtensor values in depth image:")	print(subtensor)
+	print("Check for subtensor values in depth image:")	
+	print(imgdep[{ 1,{1,10}, {1,10} }])
+	print(imgdep[{ 2, {1,10}, {1,10} }])
 	print("max min:")
 	print(torch.max(imgdep))
 	print(torch.min(imgdep))
-
 	image.display(imgdep)
-	--image.display(imgdep2)
 	
-
 	-- wrist motor position (normalised to 255)
 	print("1st motor data:")
 	print(demo.screen[4][1][1])

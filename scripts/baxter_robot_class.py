@@ -98,13 +98,13 @@ class BaxterManipulator(object):
 		# Function to return start positions - right arm set to give view over object
 		# Slight randomisation in start positions
 		# randomRightArray = [random.uniform( -randomFactor, randomFactor ) for i in range(0,7)]
-		randomLeftArray  = [random.uniform( -randomFactor, randomFactor ) for i in range(0,7)]
+		# randomLeftArray  = [random.uniform( -randomFactor, randomFactor ) for i in range(0,7)]
 	
 		rest_pos_right = [math.pi/3.0, -0.55, math.pi/4.0, math.pi/8.0 + 0.75, 0.0, 1.26 - math.pi/4.0, 0.0]
 		rest_pos_left  = [0.0, -0.55, 0.0, 0.75, 0.0, math.pi/2.0 - 0.2, 0.0]
 		
 		# rest_pos_right[:] = [x+y for x, y in zip( rest_pos_right, randomRightArray )] 
-		rest_pos_left[:]  = [x+y for x, y in zip( rest_pos_left, randomLeftArray )]  
+		# rest_pos_left[:]  = [x+y for x, y in zip( rest_pos_left, randomLeftArray )]  
 		
 		return rest_pos_right, rest_pos_left
   
@@ -300,10 +300,10 @@ class BaxterManipulator(object):
 		if (abs(self.end_x - self.object_position_x) < 0.05):
 			if (abs(self.end_y -self.object_position_y) < 0.05):
 				if (abs(self.end_z - self.object_position_z) < 0.1):
-					self._task_complete = 1
+					self._task_complete = 10
 		# Check for contact made with object for partial reward
 		elif self.object_v != 0:
-			self._task_complete = 2
+			self._task_complete = 1
                                 
 	def action( self ):
 

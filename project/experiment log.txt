@@ -1,4 +1,22 @@
+31 May
+- remove randomness in left arm initial position
+- change score spec
 
+TODO:
+1. test score adding
+- fix object position to directly below arm
+- arm only picks up
+-> scores should only increase
+
+- allow object small movement range
+- arm only picks up
+- check probability of picking up object
+
+========================
+double check in gazebo
+time whole run
+valSteps: 2000
+==============
 24th May
 
 ++ TRAINING HYPERPARAMS
