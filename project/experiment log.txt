@@ -15,7 +15,7 @@ TODO:
 ========================
 double check in gazebo
 time whole run
-valSteps: 2000
+th main.lua -env BaxterEnv -modelBody BaxterNet -bootstraps 0 -PALpha 0 -steps 200000 -hiddenSize 512 -memSize 50000 -epsilonSteps 50000 -tau 10000 -learnStart 10000 -progFreq 1000 -valFreq 5000 -valSteps 2000 -checkpoint true -batchSize 16
 ==============
 24th May
 

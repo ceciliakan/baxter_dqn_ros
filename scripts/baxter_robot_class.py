@@ -77,8 +77,8 @@ class BaxterManipulator(object):
 		object_q_z = math.sin(object_angle/2)
 		object_q_w = math.cos(object_angle/2)
 		# Position
-		object_x = random.uniform(-0.1,0.1) + 0.625
-		object_y = random.uniform(-0.1,0.1) + 0.7975
+		object_x = 0.625 + random.uniform(-0.1,0.1)
+		object_y = 0.7975 + random.uniform(-0.1,0.1)
 		# Type of object
 		self._object_type = random.randint(1,3)
 		modelstate.model_name = "object" + str(self._object_type)
@@ -293,7 +293,7 @@ class BaxterManipulator(object):
 		# z-axis of end affector adjusted by 1 due to difference in frame of reference
 		self.end_x = self._left_arm.endpoint_pose()["position"].x
 		self.end_y = self._left_arm.endpoint_pose()["position"].y
-		self.end_z = 1.0+self._left_arm.endpoint_pose()["position"].z
+		self.end_z = 1.0 + self._left_arm.endpoint_pose()["position"].z
 		
 		
 		# Comparison - threshold values are arbitrary, can be tweaked.
@@ -309,7 +309,7 @@ class BaxterManipulator(object):
 
 		if self.cmd == "1":
 			self.rotate_wrist("right")
-                          
+			                         
 		elif self.cmd == "2":
 			self.rotate_wrist("left")
                         
