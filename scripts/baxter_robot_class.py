@@ -72,7 +72,7 @@ class BaxterManipulator(object):
 			req = self._obj_state(modelstate)
 	
 		# Randomise object type and orientation
-		object_angle = random.uniform(0,math.pi)
+		object_angle = 0.0 # random.uniform(0,math.pi)
 		# orientation as quaternion
 		object_q_z = math.sin(object_angle/2)
 		object_q_w = math.cos(object_angle/2)
@@ -80,7 +80,7 @@ class BaxterManipulator(object):
 		object_x = 0.625 + random.uniform(-0.1,0.1)
 		object_y = 0.7975 + random.uniform(-0.1,0.1)
 		# Type of object
-		self._object_type = random.randint(1,3)
+		self._object_type = random.randint(1,3) * 3 - 1
 		modelstate.model_name = "object" + str(self._object_type)
 
 		# Place object for pick-up
@@ -94,24 +94,18 @@ class BaxterManipulator(object):
 		req = self._obj_state(modelstate)
 		
 		
-	def get_start_positions( self, randomFactor ):
+	def get_start_positions( self ):
 		# Function to return start positions - right arm set to give view over object
-		# Slight randomisation in start positions
-		# randomRightArray = [random.uniform( -randomFactor, randomFactor ) for i in range(0,7)]
-		# randomLeftArray  = [random.uniform( -randomFactor, randomFactor ) for i in range(0,7)]
 	
 		rest_pos_right = [math.pi/3.0, -0.55, math.pi/4.0, math.pi/8.0 + 0.75, 0.0, 1.26 - math.pi/4.0, 0.0]
 		rest_pos_left  = [0.0, -0.55, 0.0, 0.75, 0.0, math.pi/2.0 - 0.2, 0.0]
-		
-		# rest_pos_right[:] = [x+y for x, y in zip( rest_pos_right, randomRightArray )] 
-		# rest_pos_left[:]  = [x+y for x, y in zip( rest_pos_left, randomLeftArray )]  
-		
+	
 		return rest_pos_right, rest_pos_left
   
 	def _reset(self):
 		self.grip_left.open()
 		
-		rest_pos_right, rest_pos_left = self.get_start_positions( 0.05 ) 
+		rest_pos_right, rest_pos_left = self.get_start_positions() 
           
 		# Set positions
 		self._right_positions = dict(zip(self._right_arm.joint_names(), rest_pos_right))               
@@ -164,17 +158,14 @@ class BaxterManipulator(object):
 		self.cv_image[:,:,3] = 0;
 	
 		# Add motor angle information to alpha channel of image
-		wrist_angle 	= self._left_arm.joint_angle("left_w2")
 		shoulder_angle 	= self._left_arm.joint_angle("left_s0")
 		elbow_angle 	= self._left_arm.joint_angle("left_e1")
                 
 		# remove discontinuities by finding cosines and sines of angles
-		self.cv_image[0,0,3] = int(255*math.cos(wrist_angle)/(2.0*math.pi))
-		self.cv_image[0,1,3] = int(255*math.sin(wrist_angle)/(2.0*math.pi))
-		self.cv_image[0,2,3] = int(255*math.cos(elbow_angle)/(2.0*math.pi))
-		self.cv_image[0,3,3] = int(255*math.sin(elbow_angle)/(2.0*math.pi))
-		self.cv_image[0,4,3] = int(255*math.cos(shoulder_angle)/(2.0*math.pi))
-		self.cv_image[0,5,3] = int(255*math.sin(shoulder_angle)/(2.0*math.pi))
+		self.cv_image[0,0,3] = int(255*math.cos(elbow_angle)/(2.0*math.pi))
+		self.cv_image[0,1,3] = int(255*math.sin(elbow_angle)/(2.0*math.pi))
+		self.cv_image[0,2,3] = int(255*math.cos(shoulder_angle)/(2.0*math.pi))
+		self.cv_image[0,3,3] = int(255*math.sin(shoulder_angle)/(2.0*math.pi))
 		
 		self.cv_depth_img = self.bridge.imgmsg_to_cv2(dep_data, "passthrough")
 		self.cv_depth_img = self.cv_depth_img[60:240, 100:280] # crop away uninformative outer region of depth map
@@ -244,17 +235,6 @@ class BaxterManipulator(object):
 		self._pub_rate.publish(self._rate)
 		self._left_arm.move_to_joint_positions(self._left_positions)
 
-	def rotate_wrist( self, direction ):
-		if direction == "right":
-				self._left_positions["left_w2"] += 0.2
-		elif direction == "left":
-				self._left_positions["left_w2"] -= 0.2
-		else:
-				raise ValueError("Invalid movement")
-                
-		self._pub_rate.publish(self._rate)
-		self._left_arm.set_joint_positions(self._left_positions)
-
 	def rotate_shoulder( self, direction ):
  		if direction == "right":
 			self._left_positions["left_s0"] += 0.025
@@ -304,25 +284,21 @@ class BaxterManipulator(object):
 		# Check for contact made with object for partial reward
 		elif self.object_v != 0:
 			self._task_complete = 1
+		# Penalise unsuccessful attempts
+		else:
+			self._task_complete = -1
                                 
 	def action( self ):
-
 		if self.cmd == "1":
-			self.rotate_wrist("right")
-			                         
-		elif self.cmd == "2":
-			self.rotate_wrist("left")
-                        
-		elif self.cmd == "3":
 			self.rotate_shoulder("right")
                         
-		elif self.cmd == "4":
+		elif self.cmd == "2":
 			self.rotate_shoulder("left")
                     
-		elif self.cmd == '5':
+		elif self.cmd == '3':
 			self.adjust_reach("forward")
                     
-		elif self.cmd == '6':
+		elif self.cmd == '4':
 			self.adjust_reach("backwards")
 
 		elif self.cmd == '0':

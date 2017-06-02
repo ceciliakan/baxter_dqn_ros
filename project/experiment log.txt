@@ -1,4 +1,17 @@
+========================
+1 June
+
+++ Reward shaping
+- learnt policy to only pick up
+
+TODO: further simplification option
+- only sphere, 3 colours
+- no orientation change
+- remove rotate_wrist command + left_w2 motor info
+
+========================
 31 May
+
 - remove randomness in left arm initial position
 - change score spec
 
@@ -12,11 +25,11 @@ TODO:
 - arm only picks up
 - check probability of picking up object
 
-========================
+=======
 double check in gazebo
 time whole run
 th main.lua -env BaxterEnv -modelBody BaxterNet -bootstraps 0 -PALpha 0 -steps 200000 -hiddenSize 512 -memSize 50000 -epsilonSteps 50000 -tau 10000 -learnStart 10000 -progFreq 1000 -valFreq 5000 -valSteps 2000 -checkpoint true -batchSize 16
-==============
+========================
 24th May
 
 ++ TRAINING HYPERPARAMS

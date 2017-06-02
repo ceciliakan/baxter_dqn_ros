@@ -9,10 +9,10 @@ function sleep(n)
   os.execute("sleep " .. tonumber(n))
 end
 
+demo:step(0) -- required to publish processed images
 
 while true do
 	sleep(1)
-	demo:step(0) -- required to publish processed images
 	ros.spinOnce()
 	demo:msgToImg()
 	-- first three channels of image contain rgb information
@@ -42,6 +42,7 @@ while true do
 	print(torch.min(imgdep))
 	image.display(imgdep)
 	
+	--[[
 
 	local out = assert(io.open("./dep1a.csv", "w"))
 	splitter = ","
@@ -72,13 +73,16 @@ while true do
 	end
 
 	ou:close()
+	--]]
 	
 	-- wrist motor position (normalised to 255)
 	print("1st motor data:")
 	print(demo.screen[4][1][1])
 	print("task completion:")
 	print(demo.signal)
-	if (demo.signal == 1) then
+	print('step')
+	print(demo.count)
+	if (demo.signal == 10) then
 		print("Task Completed")
 		demo:sendMessage("reset")
 		demo:waitForResponse("reset")

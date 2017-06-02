@@ -128,6 +128,7 @@ end
 
 function BaxterEnv:msgToImg()
 	-- Sort message data - pixel values come through in order r[1], g[1], b[1], a[1], r[2], b[2], g[2], .. etc with the alpha channel representing motor angle information
+	-- Each depth pixel is 2 byte unsigned short format in last two channels (small endian)
 	local reordered_Data = torch.FloatTensor(14400)
 	local reordered_dep = torch.FloatTensor(7200)
 	
@@ -159,10 +160,8 @@ function BaxterEnv:msgToImg()
 	end
 	--]]
 
-	self.screen[{ {1,4},{},{} }] = torch.reshape(reordered_Data,4,self.img_size,self.img_size)
+	self.screen[{ {1,4},{},{} }] = torch.reshape(reordered_Data, 4, self.img_size,self.img_size)
 	self.screen[{ {5,6},{},{} }] = torch.reshape(reordered_dep, 2, self.img_size,self.img_size)
-
-	-- self.signal = task --testing use
 end
 
 -- 1 state returned, of type 'int', of dimensionality 6 x self.img_size x self.img_size, between 0 and 1
@@ -172,7 +171,7 @@ end
 
 -- 1 action required, of type 'int', of dimensionality 1, between 0 and 6
 function BaxterEnv:getActionSpec()
-	return {'int', 1, {0, 6}}
+	return {'int', 1, {0, 4}}
 end
 
 -- RGB screen of size self.img_size x self.img_size
@@ -182,7 +181,7 @@ end
 
 -- Min and max reward
 function BaxterEnv:getRewardSpec()
-	return 0, 1, 10
+	return 0, 1, -1, 10, -10
 end
 
 
@@ -208,7 +207,7 @@ function BaxterEnv:step(action)
 	-- making it impossible to pickup again
 	-- 1-6 control +ve or -ve for 3DOF - shoulder, wrist and elbow
 	
-	if action == 0 or step == 40 then
+	if action == 0 or step == 31 then
 		terminal = true
 		step = 1
 	end
@@ -218,12 +217,17 @@ function BaxterEnv:step(action)
 	-- get next message
 	self:msgToImg()
 	-- Check task condition
-	if task == 1 or task == 10 then	
+	if task == 1 or task == 10 or task == -1 then
 		reward = task
-	end	
+	else
+		if step == 30 then
+			reward = -10
+		end
+	end
 	
 	step = step + 1
-	
+	self.signal = reward --testing use
+	self.count = step
 	return reward, self.screen, terminal
 end
 
