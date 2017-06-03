@@ -153,7 +153,6 @@ class BaxterManipulator(object):
 	# Recieve image from gazebo - resizes to 60 by 60
 	def img_callback(self,img_data,dep_data):
 		self.cv_image = self.bridge.imgmsg_to_cv2(img_data, "rgba8")
-		self.cv_image = self.cv_image[300:800, 100:600]
 		self.cv_image = cv2.resize(self.cv_image, (60, 60))
 		self.cv_image[:,:,3] = 0;
 	
@@ -168,7 +167,7 @@ class BaxterManipulator(object):
 		self.cv_image[0,3,3] = int(255*math.sin(shoulder_angle)/(2.0*math.pi))
 		
 		self.cv_depth_img = self.bridge.imgmsg_to_cv2(dep_data, "passthrough")
-		self.cv_depth_img = self.cv_depth_img[60:240, 100:280] # crop away uninformative outer region of depth map
+		# self.cv_depth_img = self.cv_depth_img[60:240, 100:280] # crop away uninformative outer region of depth map
 		self.cv_depth_img = cv2.resize(self.cv_depth_img, (60, 60))
 
 		
@@ -186,7 +185,7 @@ class BaxterManipulator(object):
 	def listener(self):
 		rospy.Subscriber('chatter', String, self.action_callback)
 		rospy.Subscriber("/gazebo/model_states", ModelStates, self.object_pose_callback)
-		self.img_sub = message_filters.Subscriber("/cameras/right_hand_camera/image", Image)
+		self.img_sub = message_filters.Subscriber("/cameras/left_hand_camera/image", Image)
 		self.dep_sub = message_filters.Subscriber("/DepCamera/depth/image_raw", Image)
 		self.timeSync = message_filters.ApproximateTimeSynchronizer([self.img_sub, self.dep_sub] ,4, 0.01)
 		self.timeSync.registerCallback(self.img_callback)

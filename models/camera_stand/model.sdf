@@ -3,19 +3,19 @@
 	<model name="camera_stand">
 		<static>true</static>
 		<link name="stand">
-			<pose>0 0 0.57 0 0 0</pose>
+			<pose>0 0 0.45 0 0 0</pose>
 			<collision name="pole">
 				<pose>0 0 0 0 0 0</pose>
 				<geometry>
 					<box>
-						<size>0.04 0.04 1.14</size>
+						<size>0.04 0.04 0.9</size>
 					</box>
 				</geometry>
 			</collision>
 			<visual name="visual">
 				<geometry>
 					<box>
-						<size>0.04 0.04 1.14</size>
+						<size>0.04 0.04 0.9</size>
 					</box>
 				</geometry>
 			</visual>
@@ -37,7 +37,7 @@
 		</link>
 
 		<link name="depth_camera">
-			<pose>0 0 1.20 0.37 0.45 1.44</pose>
+			<pose>0 0 0.96 0.0 0.32 0.0</pose> <!--0.37 0.45 1.44-->
 			<collision name="collision">				
 				<geometry>
 					<box>
@@ -54,14 +54,14 @@
 			</visual>
 			<sensor name="DepCamera" type="depth">
 				<camera>
-					<horizontal_fov>1.55</horizontal_fov>
+					<horizontal_fov>1.5</horizontal_fov>
 					<image>
 						<width>320</width>
 						<height>240</height>
 					</image>
 					<clip>
 						<near>0.01</near>
-						<far>1.2</far>
+						<far>1.4</far>
 					</clip>
 				</camera>
 				<always_on>true</always_on>
@@ -69,7 +69,7 @@
 				<visualize>true</visualize>
 				<plugin name='depthCamera' filename='libgazebo_ros_depth_camera.so'>
 					<robotNamespace>camera_stand</robotNamespace>
-					<focalLength>163.362497</focalLength>
+					<focalLength>171.748184</focalLength>
 					<alwaysOn>true</alwaysOn>
 					<updateRate>30</updateRate>
 					<imageTopicName>/DepCamera/image_raw</imageTopicName>
@@ -85,7 +85,7 @@
 		</link>
 
 		<joint name="fixed_joint" type="revolute">
-			<pose>0 0 1.17 0 0 0</pose>
+			<pose>0 0 0.93 0 0 0</pose>
 			<child>depth_camera</child>
 			<parent>stand</parent>
 			<axis>

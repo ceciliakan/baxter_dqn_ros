@@ -25,13 +25,14 @@ from baxter_robot_class import BaxterManipulator
 
 def load_gazebo_models():
 	# Get Models' Path
-	table_pose = Pose(position=Point(x=0.8, y=1.0, z=0.0))
+	table_pose = Pose(position=Point(x=0.8, y=0.85, z=0.0))
 	table_reference_frame = "world"
 	object_reference_frame = "world"
 	
 	model_path = rospkg.RosPack().get_path('baxter_dqn_ros')+"/models/"
 	
-	stand_pose=Pose(position=Point(x=0.54, y=0.34, z=0.0))
+	stand_pose=Pose(position=Point(x=0.15, y=0.82, z=0.0))
+					#(x=0.54, y=0.34, z=0.0))
 	stand_reference_frame="world"
 
 	# depthCam_pose=Pose(position=Point(x=0.6, y=0.32, z=0.95))
