@@ -3,19 +3,19 @@
 	<model name="camera_stand">
 		<static>true</static>
 		<link name="stand">
-			<pose>0 0 0.45 0 0 0</pose>
+			<pose>0 0 0.48 0 0 0</pose>
 			<collision name="pole">
 				<pose>0 0 0 0 0 0</pose>
 				<geometry>
 					<box>
-						<size>0.04 0.04 0.9</size>
+						<size>0.04 0.04 0.96</size>
 					</box>
 				</geometry>
 			</collision>
 			<visual name="visual">
 				<geometry>
 					<box>
-						<size>0.04 0.04 0.9</size>
+						<size>0.04 0.04 0.96</size>
 					</box>
 				</geometry>
 			</visual>
@@ -37,7 +37,7 @@
 		</link>
 
 		<link name="depth_camera">
-			<pose>0 0 0.96 0.0 0.32 0.0</pose> <!--0.37 0.45 1.44-->
+			<pose>0 0 1.02 0.0 0.3 0.0</pose> <!--0.37 0.45 1.44-->
 			<collision name="collision">				
 				<geometry>
 					<box>
@@ -57,7 +57,7 @@
 					<horizontal_fov>1.5</horizontal_fov>
 					<image>
 						<width>320</width>
-						<height>240</height>
+						<height>320</height>
 					</image>
 					<clip>
 						<near>0.01</near>
@@ -85,7 +85,7 @@
 		</link>
 
 		<joint name="fixed_joint" type="revolute">
-			<pose>0 0 0.93 0 0 0</pose>
+			<pose>0 0 0.99 0 0 0</pose>
 			<child>depth_camera</child>
 			<parent>stand</parent>
 			<axis>
