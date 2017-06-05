@@ -1,4 +1,45 @@
 ========================
+5 June
+
+++ diagnose reward scheme implementation problem
+- verified problem with motion:
+-> gripper pressed directly upon sphere
+-> sphere no velocity, pick up not complete
+-> reward = 0 (instead of -1)
+* pick up (reward = 10) most reliably recorded
+* hitting / no hit (1, -1) scores becomes unreliable (incorrect reward = 0)
+* potential reason: delay in score reporting?
+
+TODO:
+- fix motion-reward mechanism
+- replace depth with 2nd RGB camera (D redundant given left hand camera)
+-> right hand camera view from above
+- crop left hand camera -> partial occlusion of object in view
+
+***********
+Atari code weighing:
+- Model.lua (line 141, 144)
+- orthogonal weight init + zero bias
+-> equal weighing for all possible actions
+- add 1 to feature to bias
+-> increase weight for action to happen more
+* also need to be added in net (after any linear/convolutional layer)
+
+========================
+3 June
+
+- switch to left gripper image
+- move depth camera
+
+========================
+2 June
+
+-- Training with simplification + reward shaping
+- only sphere, 3 colours
+- no orientation change
+- remove rotate_wrist command + left_w2 motor info
+
+========================
 1 June
 
 ++ Reward shaping
