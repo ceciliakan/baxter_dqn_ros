@@ -10,6 +10,12 @@
 * hitting / no hit (1, -1) scores becomes unreliable (incorrect reward = 0)
 * potential reason: delay in score reporting?
 
+++ in progress: change motion-reward scheme
+- add contact sensor to blue sphere
+collision2_name: baxter::l_gripper_l_finger::l_gripper_l_finger_collision_l_gripper_l_finger_tip
+
+collision2_name: baxter::l_gripper_r_finger::l_gripper_r_finger_collision_l_gripper_r_finger_tip
+
 TODO:
 - fix motion-reward mechanism
 - replace depth with 2nd RGB camera (D redundant given left hand camera)

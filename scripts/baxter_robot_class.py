@@ -12,19 +12,25 @@ from cv_bridge import CvBridge
 import message_filters
 
 from sensor_msgs.msg import Image
-from gazebo_msgs.msg import ModelStates
-from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 
 from std_msgs.msg import (
-UInt16,
-String,
+	UInt16,
+	String,
+	Int8
 )
 
 from geometry_msgs.msg import (
-Pose,
-Point,
-Quaternion,
+	Pose,
+	Point,
+	Quaternion,
+)
+
+from gazebo_msgs.msg import (
+	ModelState,
+	ModelStates,
+	ContactState,
+	ContactsState
 )
 
 import baxter_interface
@@ -40,6 +46,10 @@ class BaxterManipulator(object):
 		self._pub_rate = rospy.Publisher('robot/joint_state_publish_rate', UInt16, queue_size=10)
 		self.image_pub = rospy.Publisher("baxter_view",Image,queue_size=4)
 		self.dep_image_pub = rospy.Publisher("DepthMap",Image,queue_size=4)
+		self.score_pub = rospy.Publisher("score", Int8, queue_size=10)
+		self.img_header_pub = rospy.Publisher('headerFr', String, queue_size=10)
+		self.step_pub = rospy.Publisher('stepState', String, queue_size=10)
+
 
 		self._obj_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
 				
@@ -77,10 +87,10 @@ class BaxterManipulator(object):
 		object_q_z = math.sin(object_angle/2)
 		object_q_w = math.cos(object_angle/2)
 		# Position
-		object_x = 0.625 + random.uniform(-0.1,0.1)
-		object_y = 0.7975 + random.uniform(-0.1,0.1)
+		object_x = 0.625 + random.uniform(-0.03,0.01)
+		object_y = 0.7975 + random.uniform(-0.01,0.03)
 		# Type of object
-		self._object_type = random.randint(1,3) * 3 - 1
+		self._object_type = 8 # random.randint(1,3) * 3 - 1
 		modelstate.model_name = "object" + str(self._object_type)
 
 		# Place object for pick-up
@@ -167,7 +177,7 @@ class BaxterManipulator(object):
 		self.cv_image[0,3,3] = int(255*math.sin(shoulder_angle)/(2.0*math.pi))
 		
 		self.cv_depth_img = self.bridge.imgmsg_to_cv2(dep_data, "passthrough")
-		# self.cv_depth_img = self.cv_depth_img[60:240, 100:280] # crop away uninformative outer region of depth map
+		self.cv_depth_img = self.cv_depth_img[20:240, 60:260] # crop away uninformative outer region of depth map
 		self.cv_depth_img = cv2.resize(self.cv_depth_img, (60, 60))
 
 		
@@ -261,6 +271,7 @@ class BaxterManipulator(object):
 		self._left_arm.set_joint_positions(self._left_positions)
 
 	def pick_up_object( self ):
+		rospy.Subscriber("object_contact", ContactsState)
 		self.move_vertical("d")
 		time.sleep(0.2)
 		self.grip_left.close()
@@ -280,12 +291,17 @@ class BaxterManipulator(object):
 			if (abs(self.end_y -self.object_position_y) < 0.05):
 				if (abs(self.end_z - self.object_position_z) < 0.1):
 					self._task_complete = 10
+					self.step_pub.publish('picked up')
 		# Check for contact made with object for partial reward
 		elif self.object_v != 0:
 			self._task_complete = 1
+			self.step_pub.publish('hit it')
 		# Penalise unsuccessful attempts
 		else:
 			self._task_complete = -1
+			self.step_pub.publish('try again')
+			
+		self.score_pub.publish(self._task_complete)
                                 
 	def action( self ):
 		if self.cmd == "1":
@@ -310,6 +326,7 @@ class BaxterManipulator(object):
 		self.img_msg = self.bridge.cv2_to_imgmsg(self.cv_image, "rgba8")
 		self.depth_msg = self.bridge.cv2_to_imgmsg(self.cv_depth_img, "passthrough")
 		self.img_msg.header.frame_id = str(self._task_complete)
+		self.img_header_pub.publish(self.img_msg.header.frame_id)
 		self.image_pub.publish(self.img_msg)
 		self.dep_image_pub.publish(self.depth_msg)
 
