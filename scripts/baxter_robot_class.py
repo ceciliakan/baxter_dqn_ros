@@ -47,13 +47,16 @@ class BaxterManipulator(object):
 		self.image_pub = rospy.Publisher("baxter_view",Image,queue_size=4)
 		self.dep_image_pub = rospy.Publisher("DepthMap",Image,queue_size=4)
 		self.score_pub = rospy.Publisher("score", Int8, queue_size=10)
-		self.img_header_pub = rospy.Publisher('headerFr', String, queue_size=10)
 		self.step_pub = rospy.Publisher('stepState', String, queue_size=10)
 
 
 		self._obj_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
 				
 		# Link with baxter interface
+		self._head_camera = baxter_interface.camera.CameraController("head_camera")
+		win = (300, 300)
+		self._head_camera.window(win)
+
 		self._left_arm  = baxter_interface.limb.Limb("left")
 		self._right_arm = baxter_interface.limb.Limb("right")
 		self._left_joint_names = self._left_arm.joint_names()
@@ -87,8 +90,8 @@ class BaxterManipulator(object):
 		object_q_z = math.sin(object_angle/2)
 		object_q_w = math.cos(object_angle/2)
 		# Position
-		object_x = 0.625 + random.uniform(-0.03,0.01)
-		object_y = 0.7975 + random.uniform(-0.01,0.03)
+		object_x = 0.625 + random.uniform(-0.1,0.1)
+		object_y = 0.7975 + random.uniform(-0.1,0.1)
 		# Type of object
 		self._object_type = 8 # random.randint(1,3) * 3 - 1
 		modelstate.model_name = "object" + str(self._object_type)
@@ -269,10 +272,10 @@ class BaxterManipulator(object):
 		self._left_positions["left_w1"] = math.pi/2.0 - self._left_positions["left_e1"] - self._left_positions["left_s1"]
 		self._pub_rate.publish(self._rate)	
 		self._left_arm.set_joint_positions(self._left_positions)
-
+	
 	def pick_up_object( self ):
-		rospy.Subscriber("object_contact", ContactsState)
 		self.move_vertical("d")
+		obj_contact = rospy.wait_for_message("object_contact", ContactsState)
 		time.sleep(0.2)
 		self.grip_left.close()
 		time.sleep(1.0)
@@ -292,16 +295,18 @@ class BaxterManipulator(object):
 				if (abs(self.end_z - self.object_position_z) < 0.1):
 					self._task_complete = 10
 					self.step_pub.publish('picked up')
+		
 		# Check for contact made with object for partial reward
-		elif self.object_v != 0:
-			self._task_complete = 1
-			self.step_pub.publish('hit it')
+		#elif (for contact in obj_contact.states if contact.collision2_name == "hihi"):
+		#			self.step_pub.publish('touched')
+				
 		# Penalise unsuccessful attempts
 		else:
 			self._task_complete = -1
 			self.step_pub.publish('try again')
 			
 		self.score_pub.publish(self._task_complete)
+		
                                 
 	def action( self ):
 		if self.cmd == "1":
@@ -318,7 +323,7 @@ class BaxterManipulator(object):
 
 		elif self.cmd == '0':
 			self.pick_up_object()
-
+			
 		elif self.cmd == 'reset':
 			self._reset()
                 
@@ -326,7 +331,6 @@ class BaxterManipulator(object):
 		self.img_msg = self.bridge.cv2_to_imgmsg(self.cv_image, "rgba8")
 		self.depth_msg = self.bridge.cv2_to_imgmsg(self.cv_depth_img, "passthrough")
 		self.img_msg.header.frame_id = str(self._task_complete)
-		self.img_header_pub.publish(self.img_msg.header.frame_id)
 		self.image_pub.publish(self.img_msg)
 		self.dep_image_pub.publish(self.depth_msg)
 
