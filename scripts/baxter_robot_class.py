@@ -53,10 +53,6 @@ class BaxterManipulator(object):
 		self._obj_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
 				
 		# Link with baxter interface
-		self._head_camera = baxter_interface.camera.CameraController("head_camera")
-		win = (300, 300)
-		self._head_camera.window(win)
-
 		self._left_arm  = baxter_interface.limb.Limb("left")
 		self._right_arm = baxter_interface.limb.Limb("right")
 		self._left_joint_names = self._left_arm.joint_names()
@@ -90,8 +86,8 @@ class BaxterManipulator(object):
 		object_q_z = math.sin(object_angle/2)
 		object_q_w = math.cos(object_angle/2)
 		# Position
-		object_x = 0.625 + random.uniform(-0.1,0.1)
-		object_y = 0.7975 + random.uniform(-0.1,0.1)
+		object_x = 0.625 + random.uniform(-0.01,0.03)
+		object_y = 0.7975 + random.uniform(-0.03,0.01)
 		# Type of object
 		self._object_type = 8 # random.randint(1,3) * 3 - 1
 		modelstate.model_name = "object" + str(self._object_type)
@@ -194,13 +190,13 @@ class BaxterManipulator(object):
 			
 			#check for some velocity - if when picking up it hit the object - for an additional reward
 			self.object_v = data.twist[index].angular.x # just need any velocity - does not matter 
-
+			
 	def listener(self):
 		rospy.Subscriber('chatter', String, self.action_callback)
 		rospy.Subscriber("/gazebo/model_states", ModelStates, self.object_pose_callback)
 		self.img_sub = message_filters.Subscriber("/cameras/left_hand_camera/image", Image)
 		self.dep_sub = message_filters.Subscriber("/DepCamera/depth/image_raw", Image)
-		self.timeSync = message_filters.ApproximateTimeSynchronizer([self.img_sub, self.dep_sub] ,4, 0.01)
+		self.timeSync = message_filters.ApproximateTimeSynchronizer([self.img_sub, self.dep_sub], 4, 0.01)
 		self.timeSync.registerCallback(self.img_callback)
 		
 		rospy.spin()	
@@ -288,7 +284,6 @@ class BaxterManipulator(object):
 		self.end_y = self._left_arm.endpoint_pose()["position"].y
 		self.end_z = 1.0 + self._left_arm.endpoint_pose()["position"].z
 		
-		
 		# Comparison - threshold values are arbitrary, can be tweaked.
 		if (abs(self.end_x - self.object_position_x) < 0.05):
 			if (abs(self.end_y -self.object_position_y) < 0.05):
@@ -296,10 +291,15 @@ class BaxterManipulator(object):
 					self._task_complete = 10
 					self.step_pub.publish('picked up')
 		
-		# Check for contact made with object for partial reward
-		#elif (for contact in obj_contact.states if contact.collision2_name == "hihi"):
-		#			self.step_pub.publish('touched')
-				
+		# Check for contact made with object for partial reward - for object pushed away
+		elif self.object_v != 0:
+			self._task_complete = 1
+		
+		# Check for contact made with object for partial reward - for object remaining stationary
+		elif any ( contact.collision2_name == 'baxter::l_gripper_r_finger::l_gripper_r_finger_collision_l_gripper_r_finger_tip' for contact in obj_contact.states ):
+			self._task_complete = 1
+			self.step_pub.publish('touched')
+			
 		# Penalise unsuccessful attempts
 		else:
 			self._task_complete = -1
@@ -307,6 +307,7 @@ class BaxterManipulator(object):
 			
 		self.score_pub.publish(self._task_complete)
 		
+		# or contact.collision2_name == 'baxter::l_gripper_l_finger::l_gripper_l_finger_collision_l_gripper_l_finger_tip' 
                                 
 	def action( self ):
 		if self.cmd == "1":
@@ -330,7 +331,6 @@ class BaxterManipulator(object):
 		# Publish image with terminal in header
 		self.img_msg = self.bridge.cv2_to_imgmsg(self.cv_image, "rgba8")
 		self.depth_msg = self.bridge.cv2_to_imgmsg(self.cv_depth_img, "passthrough")
-		self.img_msg.header.frame_id = str(self._task_complete)
 		self.image_pub.publish(self.img_msg)
 		self.dep_image_pub.publish(self.depth_msg)
 

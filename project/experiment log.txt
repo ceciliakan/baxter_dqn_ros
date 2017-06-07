@@ -1,3 +1,29 @@
+7 June
+- SDK does not have cameraController service
+-> need to process image (abandon head camera plan)
+
+- object contact sensor method unreliable (to leave out)
+-> depends on timing of gripper motion
+-> gripper removed too early / late -> does not publish 
+even when 'if' condition satisfied (AND entered)
+
+++++++++++++++
+Python snippet to print messages from topic
+
+filepath = '/home/hyk13/ros_ws/src/baxter_dqn_ros/somefile'+str(time.time()).split('.')[0]+'.txt'
+		with open(filepath, 'w+') as f:
+			f.write(str(obj_contact))  # python will convert \n to os.linesep
+			f.close() 
+		
+========================
+6 June
+- built reward scheme code logic test case
+
+- TODO:
+- not using right hand camera
+- add bird-eye view RGB camera
+Kai: want some sensor info the robot cannot provide itself
+- left hand camera occlusion
 ========================
 5 June
 
