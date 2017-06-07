@@ -29,8 +29,6 @@ from geometry_msgs.msg import (
 from gazebo_msgs.msg import (
 	ModelState,
 	ModelStates,
-	ContactState,
-	ContactsState
 )
 
 import baxter_interface
@@ -86,8 +84,8 @@ class BaxterManipulator(object):
 		object_q_z = math.sin(object_angle/2)
 		object_q_w = math.cos(object_angle/2)
 		# Position
-		object_x = 0.625 + random.uniform(-0.01,0.03)
-		object_y = 0.7975 + random.uniform(-0.03,0.01)
+		object_x = 0.625 + random.uniform(-0.1,0.1)
+		object_y = 0.7975 + random.uniform(-0.1,0.1)
 		# Type of object
 		self._object_type = 8 # random.randint(1,3) * 3 - 1
 		modelstate.model_name = "object" + str(self._object_type)
@@ -160,7 +158,7 @@ class BaxterManipulator(object):
 		self.action()
 		
 	# Recieve image from gazebo - resizes to 60 by 60
-	def img_callback(self,img_data,dep_data):
+	def img_callback(self,img_data,rgb_data):
 		self.cv_image = self.bridge.imgmsg_to_cv2(img_data, "rgba8")
 		self.cv_image = cv2.resize(self.cv_image, (60, 60))
 		self.cv_image[:,:,3] = 0;
@@ -175,9 +173,9 @@ class BaxterManipulator(object):
 		self.cv_image[0,2,3] = int(255*math.cos(shoulder_angle)/(2.0*math.pi))
 		self.cv_image[0,3,3] = int(255*math.sin(shoulder_angle)/(2.0*math.pi))
 		
-		self.cv_depth_img = self.bridge.imgmsg_to_cv2(dep_data, "passthrough")
-		self.cv_depth_img = self.cv_depth_img[20:240, 60:260] # crop away uninformative outer region of depth map
-		self.cv_depth_img = cv2.resize(self.cv_depth_img, (60, 60))
+		self.cv_rgb_img = self.bridge.imgmsg_to_cv2(rgb_data, "rgba8")
+		self.cv_rgb_img = self.cv_rgb_img[20:240, 60:260] # crop away uninformative outer region of depth map
+		self.cv_rgb_img = cv2.resize(self.cv_rgb_img, (60, 60))
 
 		
   	# Recieve object pose information - used to determine whether task has been completed		
@@ -195,7 +193,7 @@ class BaxterManipulator(object):
 		rospy.Subscriber('chatter', String, self.action_callback)
 		rospy.Subscriber("/gazebo/model_states", ModelStates, self.object_pose_callback)
 		self.img_sub = message_filters.Subscriber("/cameras/left_hand_camera/image", Image)
-		self.dep_sub = message_filters.Subscriber("/DepCamera/depth/image_raw", Image)
+		self.dep_sub = message_filters.Subscriber("/DepCamera/image_raw", Image)
 		self.timeSync = message_filters.ApproximateTimeSynchronizer([self.img_sub, self.dep_sub], 4, 0.01)
 		self.timeSync.registerCallback(self.img_callback)
 		
@@ -270,10 +268,12 @@ class BaxterManipulator(object):
 		self._left_arm.set_joint_positions(self._left_positions)
 	
 	def pick_up_object( self ):
+		obj_move = 0
 		self.move_vertical("d")
-		obj_contact = rospy.wait_for_message("object_contact", ContactsState)
 		time.sleep(0.2)
 		self.grip_left.close()
+		if self.object_v != 0:
+			obj_move = 1
 		time.sleep(1.0)
 		self.move_vertical("u")
 
@@ -285,21 +285,16 @@ class BaxterManipulator(object):
 		self.end_z = 1.0 + self._left_arm.endpoint_pose()["position"].z
 		
 		# Comparison - threshold values are arbitrary, can be tweaked.
-		if (abs(self.end_x - self.object_position_x) < 0.05):
+		if (abs(self.end_z - self.object_position_z) < 0.1):
 			if (abs(self.end_y -self.object_position_y) < 0.05):
-				if (abs(self.end_z - self.object_position_z) < 0.1):
+				if (abs(self.end_x - self.object_position_x) < 0.05):
 					self._task_complete = 10
 					self.step_pub.publish('picked up')
 		
 		# Check for contact made with object for partial reward - for object pushed away
-		elif self.object_v != 0:
+		elif obj_move != 0:
 			self._task_complete = 1
-		
-		# Check for contact made with object for partial reward - for object remaining stationary
-		elif any ( contact.collision2_name == 'baxter::l_gripper_r_finger::l_gripper_r_finger_collision_l_gripper_r_finger_tip' for contact in obj_contact.states ):
-			self._task_complete = 1
-			self.step_pub.publish('touched')
-			
+
 		# Penalise unsuccessful attempts
 		else:
 			self._task_complete = -1
@@ -330,8 +325,8 @@ class BaxterManipulator(object):
                 
 		# Publish image with terminal in header
 		self.img_msg = self.bridge.cv2_to_imgmsg(self.cv_image, "rgba8")
-		self.depth_msg = self.bridge.cv2_to_imgmsg(self.cv_depth_img, "passthrough")
+		self.rgb_msg = self.bridge.cv2_to_imgmsg(self.cv_rgb_img, "rgba8")
 		self.image_pub.publish(self.img_msg)
-		self.dep_image_pub.publish(self.depth_msg)
+		self.dep_image_pub.publish(self.rgb_msg)
 
 
