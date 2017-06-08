@@ -27,10 +27,10 @@ while true do
 	print(imgd[{ 2, {30,40}, {30,40} }])
 	
 
-	imgdep = demo.screen[{ {5,6},{},{} }]
+	imgdep = demo.screen[{ {5,7},{},{} }]
 	--imgdep:mul(255)	
 	
-	dep1 = imgdep[{ 1, {}, {} }]
+	--[[dep1 = imgdep[{ 1, {}, {} }]
 	dep2 = imgdep[{ 2, {}, {} }]
 	print('endian')
 	print(demo.dep_endian)
@@ -39,7 +39,7 @@ while true do
 	print(imgdep[{ 2, {1,10}, {1,10} }])
 	print("max min:")
 	print(torch.max(imgdep))
-	print(torch.min(imgdep))
+	print(torch.min(imgdep))--]]
 	image.display(imgdep)
 	
 	--[[

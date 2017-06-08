@@ -31,9 +31,9 @@ def load_gazebo_models():
 	
 	model_path = rospkg.RosPack().get_path('baxter_dqn_ros')+"/models/"
 	
-	stand_pose=Pose(position=Point(x=0.15, y=0.82, z=0.0))
+	rack_pose=Pose(position=Point(x=0.9, y=0.87, z=0.0))
 
-	stand_reference_frame="world"
+	rack_reference_frame="world"
 	
 	
 	# Load Table SDF
@@ -41,10 +41,10 @@ def load_gazebo_models():
 	with open (model_path + "cafe_table/model.sdf", "r") as table_file:
 		table_xml=table_file.read().replace('\n', '')
 
-	# Load Camera Stand SDF
-	stand_xml = ''
-	with open (model_path + "camera_stand/model.sdf", "r") as stand_file:
-		stand_xml=stand_file.read().replace('\n', '')
+	# Load Camera Rack SDF
+	rack_xml = ''
+	with open (model_path + "camera_rack/model.sdf", "r") as rack_file:
+		rack_xml=rack_file.read().replace('\n', '')
 
 	# Load objects URDF
 	xml = {}
@@ -84,12 +84,12 @@ def load_gazebo_models():
 	except rospy.ServiceException, e:
 		rospy.logerr("Spawn SDF service call failed: {0}".format(e))
 		
-	# Spawn Camera Stand SDF
+	# Spawn Camera Rack SDF
 	rospy.wait_for_service('/gazebo/spawn_sdf_model')
 	try:
 		spawn_sdf = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
-		resp_sdf = spawn_sdf("camera_stand", stand_xml, "/",
-						 stand_pose, stand_reference_frame)
+		resp_sdf = spawn_sdf("camera_rack", rack_xml, "/",
+						 rack_pose, rack_reference_frame)
 	except rospy.ServiceE1xception, e:
 		rospy.logerr("Spawn SDF service call failed: {0}".format(e))
 	
@@ -109,7 +109,7 @@ def delete_gazebo_models():
 	try:
 		delete_model = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
 		resp_delete = delete_model("cafe_table")
-		resp_delete = delete_model("camera_stand")
+		resp_delete = delete_model("camera_rack")
 		# resp_delete = delete_model("depth_camera")
 		resp_delete = delete_model("object")
 	except rospy.ServiceException, e:

@@ -7,6 +7,17 @@
 -> gripper removed too early / late -> does not publish 
 even when 'if' condition satisfied (AND entered)
 
+++ attempt to increase reward for hit
+- detect multiple times for object velocity
+- detect after every movement for gripping
+
+++ complete implementation of bird-eye camera rack
+++ complete bird-eye camera calibration
+
+++ complete cropping of both RGB images
+
+++ for occlusion, skew and increase object spawning area
+- [-1, 1] to [-1, 1.3] for both axis
 ++++++++++++++
 Python snippet to print messages from topic
 

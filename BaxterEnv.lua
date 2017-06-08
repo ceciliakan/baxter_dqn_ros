@@ -35,7 +35,7 @@ function BaxterEnv:_init(opts)
 
 	--setup state variables
 	self.img_size = 60
-	self.screen = torch.FloatTensor(6,self.img_size,self.img_size):zero()
+	self.screen = torch.FloatTensor(7,self.img_size,self.img_size):zero()
 
 	--setup ros node and spinner (processes queued send and receive topics)
 	self.spinner = ros.AsyncSpinner()
@@ -130,43 +130,30 @@ function BaxterEnv:msgToImg()
 	-- Sort message data - pixel values come through in order r[1], g[1], b[1], a[1], r[2], b[2], g[2], .. etc with the alpha channel representing motor angle information
 	-- Each depth pixel is 2 byte unsigned short format in last two channels (small endian)
 	local reordered_Data = torch.FloatTensor(14400)
-	local reordered_dep = torch.FloatTensor(7200)
+	local reordered_dep = torch.FloatTensor(10800)
 	
 	for i = 1, 14400 do
 		if i%4==1 then
 			reordered_Data[(i+3)/4] = raw_msg[i]/255
+			reordered_dep[(i+3)/4] = dep_raw_msg[i]/255
 		elseif i%4==2 then
 			reordered_Data[3600 + (i+2)/4] = raw_msg[i]/255
+			reordered_dep[3600 + (i+2)/4] = dep_raw_msg[i]/255
 		elseif i%4 == 3 then
 			reordered_Data[7200 + (i+1)/4] = raw_msg[i]/255
-			reordered_dep[(i+1)/4] = dep_raw_msg[i]/255
+			reordered_dep[7200 + (i+1)/4] = dep_raw_msg[i]/255
 		else
 			reordered_Data[10800 + i/4] = raw_msg[i]/255
-			reordered_dep[3600 + i/4] = dep_raw_msg[i]/255
 		end
 	end
 
-	--[[
-	self.dep_bit1 = reordered_dep[5400]
-	self.dep_bit2 = reordered_dep[1800]
-	self.shiftbit2 =bit.lshift(self.dep_bit2, 3)
-	self.or_bit12 = self.shiftbit2 + self.dep_bit1
-	
-	
-	for i = 1, 3600 do
-		--dep_byteH = bit.lshift(reordered_dep[3600 + i], 3)
-		sf[3600+ i] = bit.lshift(reordered_dep[3600 + i] , 3)
-		sf[i] = bit.lshift(reordered_dep[i] , 3)
-	end
-	--]]
-
 	self.screen[{ {1,4},{},{} }] = torch.reshape(reordered_Data, 4, self.img_size,self.img_size)
-	self.screen[{ {5,6},{},{} }] = torch.reshape(reordered_dep, 2, self.img_size,self.img_size)
+	self.screen[{ {5,7},{},{} }] = torch.reshape(reordered_dep, 3, self.img_size,self.img_size)
 end
 
 -- 1 state returned, of type 'int', of dimensionality 6 x self.img_size x self.img_size, between 0 and 1
 function BaxterEnv:getStateSpec()
-	return {'real', {6, self.img_size, self.img_size}, {0, 1}}
+	return {'real', {7, self.img_size, self.img_size}, {0, 1}}
 end
 
 -- 1 action required, of type 'int', of dimensionality 1, between 0 and 6
@@ -207,7 +194,7 @@ function BaxterEnv:step(action)
 	-- making it impossible to pickup again
 	-- 1-6 control +ve or -ve for 3DOF - shoulder, wrist and elbow
 	
-	if action == 0 or step == 31 then
+	if action == 0 then
 		terminal = true
 		step = 1
 	end
@@ -221,13 +208,14 @@ function BaxterEnv:step(action)
 		reward = task
 	else
 		if step == 30 then
+			terminal = true
+			step = 1
 			reward = -10
 		end
 	end
 	
 	step = step + 1
 	self.signal = reward --testing use
-	self.count = step
 	return reward, self.screen, terminal
 end
 

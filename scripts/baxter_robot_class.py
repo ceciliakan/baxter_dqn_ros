@@ -45,14 +45,12 @@ class BaxterManipulator(object):
 		self.image_pub = rospy.Publisher("baxter_view",Image,queue_size=4)
 		self.dep_image_pub = rospy.Publisher("DepthMap",Image,queue_size=4)
 		self.score_pub = rospy.Publisher("score", Int8, queue_size=10)
-		self.step_pub = rospy.Publisher('stepState', String, queue_size=10)
 
 
 		self._obj_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
 				
 		# Link with baxter interface
 		self._left_arm  = baxter_interface.limb.Limb("left")
-		self._right_arm = baxter_interface.limb.Limb("right")
 		self._left_joint_names = self._left_arm.joint_names()
 		self.grip_left = baxter_interface.Gripper('left', CHECK_VERSION)
 
@@ -84,10 +82,10 @@ class BaxterManipulator(object):
 		object_q_z = math.sin(object_angle/2)
 		object_q_w = math.cos(object_angle/2)
 		# Position
-		object_x = 0.625 + random.uniform(-0.1,0.1)
-		object_y = 0.7975 + random.uniform(-0.1,0.1)
+		object_x = 0.625 + random.uniform(-0.04,0.03)
+		object_y = 0.7975 + random.uniform(-0.05,0.03)
 		# Type of object
-		self._object_type = 8 # random.randint(1,3) * 3 - 1
+		self._object_type = random.randint(1,3) * 3 - 1
 		modelstate.model_name = "object" + str(self._object_type)
 
 		# Place object for pick-up
@@ -99,27 +97,15 @@ class BaxterManipulator(object):
 		
 		modelstate.pose = object_pose
 		req = self._obj_state(modelstate)
-		
-		
-	def get_start_positions( self ):
-		# Function to return start positions - right arm set to give view over object
-	
-		rest_pos_right = [math.pi/3.0, -0.55, math.pi/4.0, math.pi/8.0 + 0.75, 0.0, 1.26 - math.pi/4.0, 0.0]
-		rest_pos_left  = [0.0, -0.55, 0.0, 0.75, 0.0, math.pi/2.0 - 0.2, 0.0]
-	
-		return rest_pos_right, rest_pos_left
   
 	def _reset(self):
 		self.grip_left.open()
 		
-		rest_pos_right, rest_pos_left = self.get_start_positions() 
-          
+		rest_pos_left  = [0.0, -0.55, 0.0, 0.75, 0.0, math.pi/2.0 - 0.2, 0.0]          
 		# Set positions
-		self._right_positions = dict(zip(self._right_arm.joint_names(), rest_pos_right))               
 		self._left_positions = dict(zip(self._left_arm.joint_names(), rest_pos_left))            
 		self._torques = dict(zip(self._left_arm.joint_names(), [0.0]*7 ))
     
-		self._right_arm.move_to_joint_positions(self._right_positions)
 		self._left_arm.move_to_joint_positions(self._left_positions)
 		# Reset models
 		self.position_gazebo_models()
@@ -160,6 +146,7 @@ class BaxterManipulator(object):
 	# Recieve image from gazebo - resizes to 60 by 60
 	def img_callback(self,img_data,rgb_data):
 		self.cv_image = self.bridge.imgmsg_to_cv2(img_data, "rgba8")
+		self.cv_image = self.cv_image[100:800, 20:720]
 		self.cv_image = cv2.resize(self.cv_image, (60, 60))
 		self.cv_image[:,:,3] = 0;
 	
@@ -174,7 +161,7 @@ class BaxterManipulator(object):
 		self.cv_image[0,3,3] = int(255*math.sin(shoulder_angle)/(2.0*math.pi))
 		
 		self.cv_rgb_img = self.bridge.imgmsg_to_cv2(rgb_data, "rgba8")
-		self.cv_rgb_img = self.cv_rgb_img[20:240, 60:260] # crop away uninformative outer region of depth map
+		self.cv_rgb_img = self.cv_rgb_img[110:320, 55:265] # crop away uninformative outer region of depth map
 		self.cv_rgb_img = cv2.resize(self.cv_rgb_img, (60, 60))
 
 		
@@ -270,12 +257,16 @@ class BaxterManipulator(object):
 	def pick_up_object( self ):
 		obj_move = 0
 		self.move_vertical("d")
+		if self.object_v != 0:
+			obj_move = 1
 		time.sleep(0.2)
 		self.grip_left.close()
 		if self.object_v != 0:
 			obj_move = 1
 		time.sleep(1.0)
 		self.move_vertical("u")
+		if self.object_v != 0:
+			obj_move = 1
 
 		# Get effector endpoint pose - this is compared with the object pose
 		# to determine if the task has been succesfully completed or not
@@ -285,11 +276,10 @@ class BaxterManipulator(object):
 		self.end_z = 1.0 + self._left_arm.endpoint_pose()["position"].z
 		
 		# Comparison - threshold values are arbitrary, can be tweaked.
-		if (abs(self.end_z - self.object_position_z) < 0.1):
+		if (abs(self.end_x - self.object_position_x) < 0.05):
 			if (abs(self.end_y -self.object_position_y) < 0.05):
-				if (abs(self.end_x - self.object_position_x) < 0.05):
+				if (abs(self.end_z - self.object_position_z) < 0.1):
 					self._task_complete = 10
-					self.step_pub.publish('picked up')
 		
 		# Check for contact made with object for partial reward - for object pushed away
 		elif obj_move != 0:
@@ -298,11 +288,8 @@ class BaxterManipulator(object):
 		# Penalise unsuccessful attempts
 		else:
 			self._task_complete = -1
-			self.step_pub.publish('try again')
-			
-		self.score_pub.publish(self._task_complete)
 		
-		# or contact.collision2_name == 'baxter::l_gripper_l_finger::l_gripper_l_finger_collision_l_gripper_l_finger_tip' 
+		self.score_pub.publish(self._task_complete)
                                 
 	def action( self ):
 		if self.cmd == "1":
@@ -326,6 +313,7 @@ class BaxterManipulator(object):
 		# Publish image with terminal in header
 		self.img_msg = self.bridge.cv2_to_imgmsg(self.cv_image, "rgba8")
 		self.rgb_msg = self.bridge.cv2_to_imgmsg(self.cv_rgb_img, "rgba8")
+		self.img_msg.header.frame_id = str(self._task_complete)
 		self.image_pub.publish(self.img_msg)
 		self.dep_image_pub.publish(self.rgb_msg)
 

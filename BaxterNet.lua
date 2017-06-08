@@ -15,7 +15,7 @@ local size = 60
 
 local ELU_convg = 1.0 -- required param. Value used in original paper
 
-local data = torch.FloatTensor(batchSize, histLen, 6, size, size):uniform() -- Minibatch
+local data = torch.FloatTensor(batchSize, histLen, 7, size, size):uniform() -- Minibatch
 data[{{}, {}, {4}, {}, {}}]:zero() -- Zero motor inputs
 data[{{}, {}, {4}, {1}, {1, motorInputs}}] = 2 -- 3 motor inputs
 
@@ -25,7 +25,7 @@ end
 
 function Body:createBody()
 	local net = nn.Sequential()
-	net:add(nn.View(-1, histLen, 6, size, size))
+	net:add(nn.View(-1, histLen, 7, size, size))
 	
 	local imageNet = nn.Sequential()
 	imageNet:add(nn.Narrow(3, 1, 3)) -- Extract 1st 3 (RGB) channels
@@ -36,9 +36,9 @@ function Body:createBody()
 	imageNet:add(nn.ELU(ELU_convg))
 	    
 	local depthNet = nn.Sequential()
-	depthNet:add(nn.Narrow(3, 5, 2)) -- Extract 5th + 6th channels
-	depthNet:add(nn.View(histLen*2, size, size):setNumInputDims(4))
-	depthNet:add(nn.SpatialConvolution(histLen * 2, numFilters, 5, 5))
+	depthNet:add(nn.Narrow(3, 5, 3)) -- Extract 5th + 6th channels
+	depthNet:add(nn.View(histLen * 3, size, size):setNumInputDims(4))
+	depthNet:add(nn.SpatialConvolution(histLen * 3, numFilters, 5, 5))
 	depthNet:add(nn.ELU(ELU_convg))
 	depthNet:add(nn.SpatialConvolution(numFilters, numFilters, 3, 3))
 	depthNet:add(nn.ELU(ELU_convg))
@@ -50,7 +50,7 @@ function Body:createBody()
 	local RGBDnet = nn.Sequential()
 	RGBDnet:add(branches)
 	RGBDnet:add(nn.JoinTable(2, 4))
-	RGBDnet:add(nn.SpatialConvolution(numFilters, numFilters, 3, 3)) --1st param *2 for RGBD
+	RGBDnet:add(nn.SpatialConvolution(numFilters, numFilters, 3, 3)) --1st param *2 for RGBRGB
 	RGBDnet:add(nn.ELU(ELU_convg))
 	RGBDnet:add(nn.View(1):setNumInputDims(3)) --unroll
 	
@@ -72,6 +72,7 @@ function Body:createBody()
 	net:add(merge)
 	net:add(nn.JoinTable(1,2))
 	--[[
+	--print network architecture 
 	for i,mod in ipairs(net:listModules()) do
 		print(mod)
 	end--]]
