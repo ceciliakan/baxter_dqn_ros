@@ -84,8 +84,8 @@ class BaxterManipulator(object):
 		object_q_z = math.sin(object_angle/2)
 		object_q_w = math.cos(object_angle/2)
 		# Position
-		object_x = 0.625 + random.uniform(-0.04,0.03)
-		object_y = 0.7975 + random.uniform(-0.05,0.03)
+		object_x = 0.625 + random.uniform(-0.1,0.13)
+		object_y = 0.7975 + random.uniform(-0.1,0.13)
 		# Type of object
 		self._object_type = random.randint(1,3) * 3 - 1
 		modelstate.model_name = "object" + str(self._object_type)

@@ -1,3 +1,9 @@
+8 June
+++ combined velocity and contact detection
+- no 0 reward observed
+- confirmed reward feed successful
+
+========================
 7 June
 - SDK does not have cameraController service
 -> need to process image (abandon head camera plan)
