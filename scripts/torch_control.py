@@ -54,6 +54,7 @@ def load_gazebo_models():
 		pose["object" + str(i)] = Pose(position=Point(x=-3.0+i*0.1, y=0.0, z= 0.0))
 	
 	# Red models
+	# for contact sensor obj number needs to correspond with topic name in model urdf
 	with open (model_path + "block_r/model.urdf", "r") as object1_file:
 			xml["object1"]=object1_file.read().replace('\n', '')
 	with open (model_path + "sphere_r/model.urdf", "r") as object2_file:

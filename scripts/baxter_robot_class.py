@@ -29,6 +29,8 @@ from geometry_msgs.msg import (
 from gazebo_msgs.msg import (
 	ModelState,
 	ModelStates,
+	ContactState,
+	ContactsState
 )
 
 import baxter_interface
@@ -257,6 +259,8 @@ class BaxterManipulator(object):
 	def pick_up_object( self ):
 		obj_move = 0
 		self.move_vertical("d")
+		obj_contact_topic = "object_contact"  + str(self._object_type) # object_type needs to correspond with topic name in model urdf
+		obj_contact = rospy.wait_for_message(obj_contact_topic, ContactsState)
 		if self.object_v != 0:
 			obj_move = 1
 		time.sleep(0.2)
@@ -276,13 +280,17 @@ class BaxterManipulator(object):
 		self.end_z = 1.0 + self._left_arm.endpoint_pose()["position"].z
 		
 		# Comparison - threshold values are arbitrary, can be tweaked.
-		if (abs(self.end_x - self.object_position_x) < 0.05):
-			if (abs(self.end_y -self.object_position_y) < 0.05):
-				if (abs(self.end_z - self.object_position_z) < 0.1):
+		if (abs(self.end_z - self.object_position_z) < 0.1):
+			if (abs(self.end_y -self.object_position_y) < 0.055):
+				if (abs(self.end_x - self.object_position_x) < 0.055):
 					self._task_complete = 10
 		
 		# Check for contact made with object for partial reward - for object pushed away
-		elif obj_move != 0:
+		elif obj_move != 0 or self.object_v != 0:
+			self._task_complete = 1
+		
+		# Check for contact made with object for partial reward - for object not moving
+		elif any ( (contact.collision2_name == 'baxter::l_gripper_r_finger::l_gripper_r_finger_collision_l_gripper_r_finger_tip' or contact.collision2_name == 'baxter::l_gripper_l_finger::l_gripper_l_finger_collision_l_gripper_l_finger_tip') for contact in obj_contact.states ):
 			self._task_complete = 1
 
 		# Penalise unsuccessful attempts
