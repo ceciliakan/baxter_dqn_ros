@@ -13,8 +13,6 @@ local motorInputs = 4
 local batchSize = 32
 local size = 60
 
-local ELU_convg = 1.0 -- required param. Value used in original paper
-
 local data = torch.FloatTensor(batchSize, histLen, 7, size, size):uniform() -- Minibatch
 data[{{}, {}, {4}, {}, {}}]:zero() -- Zero motor inputs
 data[{{}, {}, {4}, {1}, {1, motorInputs}}] = 2 -- 3 motor inputs
@@ -30,29 +28,32 @@ function Body:createBody()
 	local imageNet = nn.Sequential()
 	imageNet:add(nn.Narrow(3, 1, 3)) -- Extract 1st 3 (RGB) channels
 	imageNet:add(nn.View(histLen * 3, size, size):setNumInputDims(4)) -- Concatenate in time
-	imageNet:add(nn.SpatialConvolution(histLen * 3, numFilters, 5, 5))
-	imageNet:add(nn.ELU(ELU_convg))
-	imageNet:add(nn.SpatialConvolution(numFilters, numFilters, 3, 3))
-	imageNet:add(nn.ELU(ELU_convg))
+	imageNet:add(nn.SpatialConvolution(histLen * 3, numFilters, 7, 7, 3, 3))
+	imageNet:add(nn.ReLU(true))
+	imageNet:add(nn.SpatialConvolution(numFilters, numFilters, 5, 5, 2, 2))
+	imageNet:add(nn.ReLU(true))
 	    
 	local depthNet = nn.Sequential()
 	depthNet:add(nn.Narrow(3, 5, 3)) -- Extract 5th + 6th channels
 	depthNet:add(nn.View(histLen * 3, size, size):setNumInputDims(4))
-	depthNet:add(nn.SpatialConvolution(histLen * 3, numFilters, 5, 5))
-	depthNet:add(nn.ELU(ELU_convg))
-	depthNet:add(nn.SpatialConvolution(numFilters, numFilters, 3, 3))
-	depthNet:add(nn.ELU(ELU_convg))
+	depthNet:add(nn.SpatialConvolution(histLen * 3, numFilters, 7, 7, 3, 3))
+	depthNet:add(nn.ReLU(true))
+	depthNet:add(nn.SpatialConvolution(numFilters, numFilters, 5, 5, 2, 2))
+	depthNet:add(nn.ReLU(true))
+	depthNet:add(nn.SpatialDropout(0))
 	
 	local branches = nn.ConcatTable()
 	branches:add(imageNet)
-	--branches:add(depthNet)
+	branches:add(depthNet)
 	
 	local RGBDnet = nn.Sequential()
 	RGBDnet:add(branches)
 	RGBDnet:add(nn.JoinTable(2, 4))
-	RGBDnet:add(nn.SpatialConvolution(numFilters, numFilters, 3, 3)) --1st param *2 for RGBRGB
-	RGBDnet:add(nn.ELU(ELU_convg))
+	RGBDnet:add(nn.SpatialConvolution(numFilters * 2, numFilters, 3, 3)) --1st param *2 for RGBRGB
+	RGBDnet:add(nn.ReLU(true))
+	RGBDnet:add(nn.PrintSize())
 	RGBDnet:add(nn.View(1):setNumInputDims(3)) --unroll
+	RGBDnet:add(nn.PrintSize())
 	
 	local motorNet = nn.Sequential()
 	motorNet:add(nn.Narrow(3, 4, 1)) -- Extract 4th channel
@@ -71,6 +72,7 @@ function Body:createBody()
 	
 	net:add(merge)
 	net:add(nn.JoinTable(1,2))
+	net:add(nn.PrintSize())
 	--[[
 	--print network architecture 
 	for i,mod in ipairs(net:listModules()) do

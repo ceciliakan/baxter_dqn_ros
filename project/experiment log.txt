@@ -1,8 +1,18 @@
+12 June
+++ Completed first proper run
+++ chagne net conv filt size
+th main.lua -env BaxterEnv -modelBody BaxterNet -bootstraps 0 -PALpha 0 -steps 200000 -hiddenSize 512 -memSize 50000 -epsilonSteps 50000 -tau 10000 -learnStart 10000 -progFreq 1000 -valFreq 5000 -valSteps 2000 -checkpoint true -batchSize 16
+
+=========================
 8 June
 ++ combined velocity and contact detection
 - no 0 reward observed
 - confirmed reward feed successful
 
+++ Replace ELU with ReLU
+++ further limit field of view:
+spawning area [-0.1, -0.1] to [0.13, 0.13]
+field of view limit [-0.06, -0.06] and [0.12, 0.12]
 ========================
 7 June
 - SDK does not have cameraController service

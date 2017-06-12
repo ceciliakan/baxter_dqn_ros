@@ -148,7 +148,7 @@ class BaxterManipulator(object):
 	# Recieve image from gazebo - resizes to 60 by 60
 	def img_callback(self,img_data,rgb_data):
 		self.cv_image = self.bridge.imgmsg_to_cv2(img_data, "rgba8")
-		self.cv_image = self.cv_image[100:800, 20:720]
+		self.cv_image = self.cv_image[100:400, 300:600]
 		self.cv_image = cv2.resize(self.cv_image, (60, 60))
 		self.cv_image[:,:,3] = 0;
 	
