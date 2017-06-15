@@ -17,7 +17,8 @@ from gazebo_msgs.srv import SetModelState
 from std_msgs.msg import (
 	UInt16,
 	String,
-	Int8
+	Int8,
+	Float32
 )
 
 from geometry_msgs.msg import (
@@ -46,8 +47,7 @@ class BaxterManipulator(object):
 		self._pub_rate = rospy.Publisher('robot/joint_state_publish_rate', UInt16, queue_size=10)
 		self.image_pub = rospy.Publisher("baxter_view",Image,queue_size=4)
 		self.dep_image_pub = rospy.Publisher("DepthMap",Image,queue_size=4)
-		self.score_pub = rospy.Publisher("score", Int8, queue_size=10)
-
+		self.score_pub = rospy.Publisher("score", Float32, queue_size=10)
 
 		self._obj_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
 				
@@ -99,7 +99,7 @@ class BaxterManipulator(object):
 		
 		modelstate.pose = object_pose
 		req = self._obj_state(modelstate)
-  
+	
 	def _reset(self):
 		self.grip_left.open()
 		
@@ -116,7 +116,6 @@ class BaxterManipulator(object):
 		self._task_complete = 0
                 # Set cmd timeout
 		self._left_arm.set_command_timeout(0.5)
-		
 		
 	def _reset_control_modes(self):
 		rate = rospy.Rate(self._rate)
@@ -167,7 +166,7 @@ class BaxterManipulator(object):
 		self.cv_rgb_img = cv2.resize(self.cv_rgb_img, (60, 60))
 
 		
-  	# Recieve object pose information - used to determine whether task has been completed		
+  	# Receive object pose information - used to determine whether task has been completed		
 	def object_pose_callback(self,data):
 		if self._object_type !=0:
 			index = data.name.index('object'+str(self._object_type))
@@ -186,8 +185,19 @@ class BaxterManipulator(object):
 		self.timeSync = message_filters.ApproximateTimeSynchronizer([self.img_sub, self.dep_sub], 4, 0.01)
 		self.timeSync.registerCallback(self.img_callback)
 		
-		rospy.spin()	
+		rospy.spin()
 
+	def obj_eucl_distace( self ):
+		# Get effector endpoint pose - this is compared with the object pose
+		# to determine if the task has been succesfully completed or not
+		# z-axis of end affector adjusted by 1 due to difference in frame of reference
+		self.end_x = self._left_arm.endpoint_pose()["position"].x
+		self.end_y = self._left_arm.endpoint_pose()["position"].y
+
+		grip_pos = numpy.array((self.end_x, self.end_y))
+		obj_pos = numpy.array((self.object_position_x, self.object_position_y))
+
+		return numpy.linalg.norm(obj_pos - grip_pos) # Euclidean distance for x,y
 
 	def move_vertical( self, direction ):
 
@@ -258,32 +268,29 @@ class BaxterManipulator(object):
 	
 	def pick_up_object( self ):
 		obj_move = 0
+		
 		self.move_vertical("d")
 		obj_contact_topic = "object_contact"  + str(self._object_type) # object_type needs to correspond with topic name in model urdf
 		obj_contact = rospy.wait_for_message(obj_contact_topic, ContactsState)
 		if self.object_v != 0:
 			obj_move = 1
 		time.sleep(0.2)
+		
 		self.grip_left.close()
 		if self.object_v != 0:
 			obj_move = 1
 		time.sleep(1.0)
+		
 		self.move_vertical("u")
 		if self.object_v != 0:
 			obj_move = 1
-
-		# Get effector endpoint pose - this is compared with the object pose
-		# to determine if the task has been succesfully completed or not
-		# z-axis of end affector adjusted by 1 due to difference in frame of reference
-		self.end_x = self._left_arm.endpoint_pose()["position"].x
-		self.end_y = self._left_arm.endpoint_pose()["position"].y
-		self.end_z = 1.0 + self._left_arm.endpoint_pose()["position"].z
 		
+		self.end_z = self._left_arm.endpoint_pose()["position"].z
+
 		# Comparison - threshold values are arbitrary, can be tweaked.
 		if (abs(self.end_z - self.object_position_z) < 0.1):
-			if (abs(self.end_y -self.object_position_y) < 0.055):
-				if (abs(self.end_x - self.object_position_x) < 0.055):
-					self._task_complete = 10
+			if (self.obj_eucl_distace() < 0.055):
+				self._task_complete = 10
 		
 		# Check for contact made with object for partial reward - for object pushed away
 		elif obj_move != 0 or self.object_v != 0:
@@ -296,28 +303,37 @@ class BaxterManipulator(object):
 		# Penalise unsuccessful attempts
 		else:
 			self._task_complete = -1
-		
-		self.score_pub.publish(self._task_complete)
-                                
+		                                
 	def action( self ):
-		if self.cmd == "1":
-			self.rotate_shoulder("right")
-                        
-		elif self.cmd == "2":
-			self.rotate_shoulder("left")
-                    
-		elif self.cmd == '3':
-			self.adjust_reach("forward")
-                    
-		elif self.cmd == '4':
-			self.adjust_reach("backwards")
+		obj_distace = self.obj_eucl_distace()
 
-		elif self.cmd == '0':
+		if ( self.cmd == '1' ):
+			self.rotate_shoulder('right')
+                        
+		elif ( self.cmd == "2" ):
+			self.rotate_shoulder('left')
+                    
+		elif ( self.cmd == '3' ):
+			self.adjust_reach('forward')
+                    
+		elif ( self.cmd == '4' ):
+			self.adjust_reach('backwards')
+
+		elif ( self.cmd == '0' ):
 			self.pick_up_object()
 			
-		elif self.cmd == 'reset':
+		elif ( self.cmd == 'reset' ):
 			self._reset()
-                
+		
+		if ( self.cmd == '1' or self.cmd == '2' or self.cmd == '3' or self.cmd == '4' ):
+			obj_distace = self.obj_eucl_distace() - obj_distace
+			if ( obj_distace < 0.0):
+				self._task_complete = 0.01
+			elif (obj_distace > 0.0):
+				self._task_complete = -0.015
+				
+		self.score_pub.publish(self._task_complete) # for diagnostics
+
 		# Publish image with terminal in header
 		self.img_msg = self.bridge.cv2_to_imgmsg(self.cv_image, "rgba8")
 		self.rgb_msg = self.bridge.cv2_to_imgmsg(self.cv_rgb_img, "rgba8")

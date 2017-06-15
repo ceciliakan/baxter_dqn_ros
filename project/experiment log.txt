@@ -1,7 +1,25 @@
+15 June
+++ Reward shaping
+- small incentive to move closer to object
+- + 0.01 for smaller Euclidean dist to obj
+- -0.015 for larger Eucl dist to obj (cannot cancel out with back and forth movement)
+-> does not over power original scheme
+
+=======================
+13,14 June
+++Toy runs:
+- stationary obj
+- smaller range (-0.08 - 0.05)
+- small range (-0.01 - 0.08) *no occlusion
+
+- observed very similar conv layers across (and with other runs)
+-> not promising
+========================
 12 June
-++ Completed first proper run
+++ Completed first proper run (BaxterEnv09-1206)
 ++ chagne net conv filt size
-th main.lua -env BaxterEnv -modelBody BaxterNet -bootstraps 0 -PALpha 0 -steps 200000 -hiddenSize 512 -memSize 50000 -epsilonSteps 50000 -tau 10000 -learnStart 10000 -progFreq 1000 -valFreq 5000 -valSteps 2000 -checkpoint true -batchSize 16
+-> reduced size, larger feat of strate
+th main.lua -env BaxterEnv -modelBody BaxterNet -bootstraps 0 -PALpha 0 -steps 500000 -hiddenSize 512 -memSize 100000 -epsilonSteps 100000 -tau 10000 -learnStart 10000 -progFreq 1000 -valFreq 5000 -valSteps 2000 -checkpoint true -batchSize 16 -memSampleFreq 2
 
 =========================
 8 June

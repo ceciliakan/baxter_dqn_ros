@@ -168,7 +168,7 @@ end
 
 -- Min and max reward
 function BaxterEnv:getRewardSpec()
-	return 0, 1, -1, 10, -10
+	return 0, 0.01, -0.015, 1, -1, 10, -10
 end
 
 
@@ -204,14 +204,12 @@ function BaxterEnv:step(action)
 	-- get next message
 	self:msgToImg()
 	-- Check task condition
-	if task == 1 or task == 10 or task == -1 then
-		reward = task
+	if step == 30 then
+		terminal = true
+		step = 1
+		reward = -10
 	else
-		if step == 30 then
-			terminal = true
-			step = 1
-			reward = -10
-		end
+		reward = task
 	end
 	
 	step = step + 1
