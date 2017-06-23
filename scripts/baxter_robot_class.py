@@ -17,8 +17,7 @@ from gazebo_msgs.srv import SetModelState
 from std_msgs.msg import (
 	UInt16,
 	String,
-	Int8,
-	Float32
+	Int8
 )
 
 from geometry_msgs.msg import (
@@ -47,7 +46,9 @@ class BaxterManipulator(object):
 		self._pub_rate = rospy.Publisher('robot/joint_state_publish_rate', UInt16, queue_size=10)
 		self.image_pub = rospy.Publisher("baxter_view",Image,queue_size=4)
 		self.dep_image_pub = rospy.Publisher("DepthMap",Image,queue_size=4)
-		self.score_pub = rospy.Publisher("score", Float32, queue_size=10)
+		self.score_pub = rospy.Publisher("score", String, queue_size=10)
+		self.test_pub = rospy.Publisher("tester", String, queue_size=10)
+		self.test2_pub = rospy.Publisher("tester2", String, queue_size=10)
 
 		self._obj_state = rospy.ServiceProxy("/gazebo/set_model_state",SetModelState)
 				
@@ -191,12 +192,12 @@ class BaxterManipulator(object):
 		# Get effector endpoint pose - this is compared with the object pose
 		# to determine if the task has been succesfully completed or not
 		# z-axis of end affector adjusted by 1 due to difference in frame of reference
-		self.end_x = self._left_arm.endpoint_pose()["position"].x
-		self.end_y = self._left_arm.endpoint_pose()["position"].y
+		end_x = self._left_arm.endpoint_pose()["position"].x
+		end_y = self._left_arm.endpoint_pose()["position"].y
 
-		grip_pos = numpy.array((self.end_x, self.end_y))
+		grip_pos = numpy.array((end_x, end_y))
 		obj_pos = numpy.array((self.object_position_x, self.object_position_y))
-
+		
 		return numpy.linalg.norm(obj_pos - grip_pos) # Euclidean distance for x,y
 
 	def move_vertical( self, direction ):
@@ -241,10 +242,13 @@ class BaxterManipulator(object):
 		self._left_arm.move_to_joint_positions(self._left_positions)
 
 	def rotate_shoulder( self, direction ):
+		self.test_pub.publish('cmd: ' + self.cmd + ' | first dist: ' +  str(self.obj_eucl_distace()) )
  		if direction == "right":
 			self._left_positions["left_s0"] += 0.025
+			self.test_pub.publish('final dist: ' +  str(self.obj_eucl_distace()) )
 		elif direction == "left":
 			self._left_positions["left_s0"] -= 0.025
+			self.test_pub.publish('final dist: ' +  str(self.obj_eucl_distace()) )
 		else:
 			raise ValueError("Invalid movement")
 
@@ -252,12 +256,18 @@ class BaxterManipulator(object):
 		self._left_arm.set_joint_positions(self._left_positions)
 
 	def adjust_reach( self, direction ):
+		self.test_pub.publish('cmd: ' + self.cmd + ' | first dist: ' +  str(self.obj_eucl_distace()) )
+
 		if direction == "forward":
 			self._left_positions["left_e1"] -= 0.05
 			self._left_positions["left_s1"] += 0.05
+			self.test_pub.publish('final dist: ' +  str(self.obj_eucl_distace()) )
+
 		elif direction == "backwards":
 			self._left_positions["left_e1"] += 0.05
 			self._left_positions["left_s1"] -= 0.05
+			self.test_pub.publish('final dist: ' +  str(self.obj_eucl_distace()) )
+
 		else:
 			raise ValueError("Invalid movement")
 
@@ -286,23 +296,24 @@ class BaxterManipulator(object):
 			obj_move = 1
 		
 		self.end_z = self._left_arm.endpoint_pose()["position"].z
-
+							  
+		self.test2_pub.publish('cmd: ' + self.cmd + ' | z: ' + str(self.end_z - self.object_position_z) + ' | outside: ' + str(self.obj_eucl_distace()) ) 
+							   
 		# Comparison - threshold values are arbitrary, can be tweaked.
-		if (abs(self.end_z - self.object_position_z) < 0.1):
-			if (self.obj_eucl_distace() < 0.055):
-				self._task_complete = 10
+		if (abs(self.end_z - self.object_position_z) < 0.06) and ( self.obj_eucl_distace() < 0.055 ) :
+			self._task_complete = 1.0
 		
 		# Check for contact made with object for partial reward - for object pushed away
 		elif obj_move != 0 or self.object_v != 0:
-			self._task_complete = 1
+			self._task_complete = 0.1
 		
 		# Check for contact made with object for partial reward - for object not moving
 		elif any ( (contact.collision2_name == 'baxter::l_gripper_r_finger::l_gripper_r_finger_collision_l_gripper_r_finger_tip' or contact.collision2_name == 'baxter::l_gripper_l_finger::l_gripper_l_finger_collision_l_gripper_l_finger_tip') for contact in obj_contact.states ):
-			self._task_complete = 1
+			self._task_complete = 0.1
 
 		# Penalise unsuccessful attempts
 		else:
-			self._task_complete = -1
+			self._task_complete = -0.1
 		                                
 	def action( self ):
 		obj_distace = self.obj_eucl_distace()
@@ -325,14 +336,21 @@ class BaxterManipulator(object):
 		elif ( self.cmd == 'reset' ):
 			self._reset()
 		
+		self.score_pub.publish("after cmd: " + str(self._task_complete)+ " ---cmd: "+ self.cmd) # for diagnostics
+
+
 		if ( self.cmd == '1' or self.cmd == '2' or self.cmd == '3' or self.cmd == '4' ):
-			obj_distace = self.obj_eucl_distace() - obj_distace
-			if ( obj_distace < 0.0):
+			if ( self.obj_eucl_distace() < obj_distace):
 				self._task_complete = 0.01
-			elif (obj_distace > 0.0):
+				# self.test_pub.publish('cmd: ' + self.cmd + ' | first dist: ' + str(obj_distace) + ' | final dist: ' + str(self.obj_eucl_distace()) + ' | reward: ' + str(self._task_complete) )
+
+			else:
 				self._task_complete = -0.015
+				# self.test_pub.publish('cmd: ' + self.cmd + ' | first dist: ' + str(obj_distace) + ' | final dist: ' + str(self.obj_eucl_distace())  + ' | reward: ' + str(self._task_complete) )
+
 				
-		self.score_pub.publish(self._task_complete) # for diagnostics
+		self.score_pub.publish("final: " + str(self._task_complete)
+							 + " ---cmd: "+ self.cmd) # for diagnostics
 
 		# Publish image with terminal in header
 		self.img_msg = self.bridge.cv2_to_imgmsg(self.cv_image, "rgba8")

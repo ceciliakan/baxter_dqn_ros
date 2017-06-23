@@ -51,9 +51,7 @@ function Body:createBody()
 	RGBDnet:add(nn.JoinTable(2, 4))
 	RGBDnet:add(nn.SpatialConvolution(numFilters * 2, numFilters, 3, 3)) --1st param *2 for RGBRGB
 	RGBDnet:add(nn.ReLU(true))
-	RGBDnet:add(nn.PrintSize())
 	RGBDnet:add(nn.View(1):setNumInputDims(3)) --unroll
-	RGBDnet:add(nn.PrintSize())
 	
 	local motorNet = nn.Sequential()
 	motorNet:add(nn.Narrow(3, 4, 1)) -- Extract 4th channel
@@ -72,7 +70,6 @@ function Body:createBody()
 	
 	net:add(merge)
 	net:add(nn.JoinTable(1,2))
-	net:add(nn.PrintSize())
 	--[[
 	--print network architecture 
 	for i,mod in ipairs(net:listModules()) do

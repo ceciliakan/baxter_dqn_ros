@@ -1,3 +1,7 @@
+18 June
+reduce gamma
+th main.lua -env BaxterEnv -modelBody BaxterNet -bootstraps 0 -PALpha 0 -steps 200000 -hiddenSize 512 -memSize 50000 -epsilonSteps 50000 -tau 10000 -learnStart 10000 -progFreq 1000 -valFreq 5000 -valSteps 2000 -checkpoint true -batchSize 16 -memSampleFreq 2 -gamma 0.90
+=======================
 15 June
 ++ Reward shaping
 - small incentive to move closer to object
@@ -14,6 +18,10 @@
 
 - observed very similar conv layers across (and with other runs)
 -> not promising
+
+++ check run -> (confirmed it was just luck)
+th main.lua -env BaxterEnv -modelBody BaxterNet -bootstraps 0 -PALpha 0 -steps 500000 -hiddenSize 512 -memSize 100000 -epsilonSteps 100000 -tau 10000 -learnStart 10000 -progFreq 1000 -valFreq 5000 -valSteps 2000 -checkpoint true -batchSize 16 -memSampleFreq 2
+
 ========================
 12 June
 ++ Completed first proper run (BaxterEnv09-1206)

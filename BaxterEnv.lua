@@ -168,7 +168,8 @@ end
 
 -- Min and max reward
 function BaxterEnv:getRewardSpec()
-	return 0, 0.01, -0.015, 1, -1, 10, -10
+	return 0, 0.01, -0.015, 0.1, -0.1, 1, -1
+	-- erroreous, correct dir, wrong dir, contact obj, failed pick up, success, timeout
 end
 
 
@@ -207,7 +208,7 @@ function BaxterEnv:step(action)
 	if step == 30 then
 		terminal = true
 		step = 1
-		reward = -10
+		reward = -1
 	else
 		reward = task
 	end
