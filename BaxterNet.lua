@@ -34,7 +34,7 @@ function Body:createBody()
 	imageNet:add(nn.ReLU(true))
 	    
 	local depthNet = nn.Sequential()
-	depthNet:add(nn.Narrow(3, 5, 3)) -- Extract 5th + 6th channels
+	depthNet:add(nn.Narrow(3, 5, 3)) -- Extract 5th - 7th channels
 	depthNet:add(nn.View(histLen * 3, size, size):setNumInputDims(4))
 	depthNet:add(nn.SpatialConvolution(histLen * 3, numFilters, 7, 7, 3, 3))
 	depthNet:add(nn.ReLU(true))
